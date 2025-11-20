@@ -6,9 +6,9 @@ import sys
 NUM_JOBS = 5                # Number of jobs to submit
 NEVENTS_PER_JOB = 1000      # Events per job
 OUTPUT_BASE_DIR = "/oscar/data/mleblan6/mucoll/batch_output"
-MUCOLL_BENCHMARKS_PATH = "/users/mleblan6/work/mucoll/mucoll-benchmarks"
-# Use the run_chain.sh in the current directory (where this script is)
-SCRIPT_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), "run_chain.sh")
+WORK_DIR = "/users/mleblan6/work/mucoll"
+MUCOLL_BENCHMARKS_PATH = os.path.join(WORK_DIR, "mucoll-benchmarks")
+SCRIPT_PATH = os.path.join(WORK_DIR, "mucoll-slurm/run_chain.sh")
 APPTAINER_IMAGE = "docker://ghcr.io/muoncollidersoft/mucoll-sim-alma9:full_gaudi_test"
 DATA_DIR_TO_BIND = "/oscar/data/mleblan6/mucoll"
 
@@ -51,8 +51,8 @@ echo "Running on host: $(hostname)"
 echo "Job ID: {job_id}"
 
 # Run the container
-# We bind the data directory explicitly
-apptainer exec --bind {DATA_DIR_TO_BIND} {APPTAINER_IMAGE} bash {SCRIPT_PATH} {job_id} {NEVENTS_PER_JOB} {OUTPUT_BASE_DIR} {MUCOLL_BENCHMARKS_PATH}
+# We bind the data directory explicitly, and the work directory to ensure all scripts are found
+apptainer exec --bind {DATA_DIR_TO_BIND},{WORK_DIR} {APPTAINER_IMAGE} bash {SCRIPT_PATH} {job_id} {NEVENTS_PER_JOB} {OUTPUT_BASE_DIR} {MUCOLL_BENCHMARKS_PATH}
 """
     
     script_filename = f"submit_job_{job_id}.sh"
