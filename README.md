@@ -5,6 +5,7 @@ This directory contains scripts to run the full Muon Collider simulation chain (
 ## Scripts
 
 - **`submit_jobs.py`**: The main Python script that generates Slurm submission scripts and submits them using `sbatch`.
+- **`submit_scan.py`**: A script to submit a grid scan of jobs over different particle types (PDG), transverse momenta (pT), and theta ranges.
 - **`run_chain.sh`**: The shell script that is executed by each job inside the Apptainer container. It orchestrates the 4 steps of the simulation chain.
 
 ## Prerequisites
@@ -14,6 +15,8 @@ This directory contains scripts to run the full Muon Collider simulation chain (
 - The MuColl Apptainer image (e.g., `docker://ghcr.io/muoncollidersoft/mucoll-sim-alma9:full_gaudi_test`).
 
 ## Usage
+
+### Standard Submission
 
 1.  **Configure the submission**:
     Open `submit_jobs.py` and edit the configuration section at the top:
@@ -35,12 +38,35 @@ This directory contains scripts to run the full Muon Collider simulation chain (
     python submit_jobs.py
     ```
 
-    This will:
-    - Create the output directory if it doesn't exist.
-    - Loop `NUM_JOBS` times.
-    - For each job, create a temporary Slurm script (`submit_job_X.sh`).
-    - Submit the script via `sbatch`.
-    - Clean up the temporary script.
+### Parameter Scan Submission
+
+1.  **Configure the scan**:
+    Open `submit_scan.py` and edit the configuration and scan parameters:
+
+    ```python
+    # --- Scan Parameters ---
+    PDG_LIST = [11, 13, 211]        # e.g., Electron, Muon, Pion
+    PT_LIST = [10, 50, 100]         # GeV
+    THETA_LIST = [(10, 170), (30, 150)] # (Min, Max) degrees
+    
+    NUM_JOBS_PER_POINT = 2          # Jobs per configuration
+    ```
+
+2.  **Submit the scan**:
+    ```bash
+    python submit_scan.py
+    ```
+
+    This will create a directory structure like:
+    ```
+    /path/to/output/scan/
+    ├── pdg_11_pt_10_theta_10-170/
+    │   ├── logs/
+    │   ├── job_0/
+    │   └── job_1/
+    ├── pdg_11_pt_50_theta_10-170/
+    └── ...
+    ```
 
 ## Output Structure
 

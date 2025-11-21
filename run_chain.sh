@@ -6,10 +6,15 @@ JOB_ID=$1
 NEVENTS=$2
 OUTPUT_DIR=$3
 MUCOLL_BENCHMARKS_PATH=$4
+PDG=${5:-11}
+PT=${6:-100}
+THETA_MIN=${7:-10}
+THETA_MAX=${8:-170}
 
 echo "Starting job $JOB_ID with $NEVENTS events"
 echo "Output directory: $OUTPUT_DIR"
 echo "Benchmarks path: $MUCOLL_BENCHMARKS_PATH"
+echo "Particle: PDG=$PDG, pT=$PT GeV, Theta=[$THETA_MIN, $THETA_MAX]"
 
 # Source the main environment setup
 # This assumes the workspace is mounted in the container
@@ -33,7 +38,7 @@ cp -r $MUCOLL_BENCHMARKS_PATH/reconstruction/PandoraSettings/ ./
 # --- 1. Generation ---
 echo "Running Generation..."
 python $MUCOLL_BENCHMARKS_PATH/generation/pgun/pgun_edm4hep.py \
-    -p 1 -e $NEVENTS --pdg 11 --pt 100 --theta 10 170 -- gen_output.edm4hep.root
+    -p 1 -e $NEVENTS --pdg $PDG --pt $PT --theta $THETA_MIN $THETA_MAX -- gen_output.edm4hep.root
 
 # --- 2. Simulation ---
 echo "Running Simulation..."
