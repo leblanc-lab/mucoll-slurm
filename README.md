@@ -84,7 +84,7 @@ To run GEN/SIM/DIGI/RECO, first we need to set the detector geometry to either M
 
 ```
 cp -r mucoll-benchmarks/reconstruction/PandoraSettings/ ./
-source mucoll-benchmarks/k4MuCPlayground/setup_digireco.sh ./ MAIA_v0
+source mucoll-benchmarks/k4MuCPlayground/setup_digireco.sh mucoll-benchmarks/ MAIA_v0
 
 # you should see the following output
    ╭──────────────────────────────────────────────╮
