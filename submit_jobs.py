@@ -3,13 +3,17 @@ import subprocess
 import sys
 
 # --- Configuration ---
-NUM_JOBS = 5                # Number of jobs to submit
-NEVENTS_PER_JOB = 1000      # Events per job
+NUM_JOBS = 1                # Number of jobs to submit
+NEVENTS_PER_JOB = 10       # Events per job
 OUTPUT_BASE_DIR = "/oscar/data/mleblan6/mucoll/batch_output"
-WORK_DIR = "/users/mleblan6/work/mucoll"
+WORK_DIR = "/users/mleblan6/work/bib"
 MUCOLL_BENCHMARKS_PATH = os.path.join(WORK_DIR, "mucoll-benchmarks")
-SCRIPT_PATH = os.path.join(WORK_DIR, "mucoll-slurm/run_chain.sh")
-APPTAINER_IMAGE = "docker://ghcr.io/muoncollidersoft/mucoll-sim-alma9:full_gaudi_test"
+SCRIPT_PATH = os.path.join(WORK_DIR, "mucoll-slurm/run_chain_pgun.sh")
+#APPTAINER_IMAGE = "docker://ghcr.io/muoncollidersoft/mucoll-sim-ubuntu24:main" 
+# I have already pulled the image and converted it to a SIF, so we can use the local SIF directly to save time and bandwidth.
+# I did this with the following command:
+# apptainer pull --name mucoll-sim-ubuntu24:main.sif docker://ghcr.io/muoncollidersoft/mucoll-sim-ubuntu24:main
+APPTAINER_IMAGE = "/oscar/data/mleblan6/mucoll/mucoll-sim-ubuntu24:main.sif"
 DATA_DIR_TO_BIND = "/oscar/data/mleblan6/mucoll"
 
 # --- Validation ---
@@ -42,10 +46,10 @@ for job_id in range(NUM_JOBS):
 #SBATCH --output={log_dir}/job_{job_id}.out
 #SBATCH --error={log_dir}/job_{job_id}.err
 #SBATCH --time=04:00:00
-#SBATCH --mem=4G
+#SBATCH --mem=16G
 #SBATCH --nodes=1
 #SBATCH --ntasks=1
-#SBATCH --cpus-per-task=1
+#SBATCH --cpus-per-task=4
 
 echo "Running on host: $(hostname)"
 echo "Job ID: {job_id}"
@@ -61,6 +65,7 @@ apptainer exec --bind {DATA_DIR_TO_BIND},{WORK_DIR} {APPTAINER_IMAGE} bash {SCRI
         
     # Submit the job
     try:
+        subprocess.run("cat " + script_filename, shell=True, check=True)
         result = subprocess.run(["sbatch", script_filename], capture_output=True, text=True, check=True)
         print(f"Submitted job {job_id}: {result.stdout.strip()}")
     except subprocess.CalledProcessError as e:

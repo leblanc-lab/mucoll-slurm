@@ -6,16 +6,20 @@ import itertools
 # --- Configuration ---
 NUM_JOBS_PER_POINT = 2      # Number of jobs to submit per scan point
 NEVENTS_PER_JOB = 1000       # Events per job
-OUTPUT_BASE_DIR = "/oscar/data/mleblan6/mucoll/batch_output/scan"
-WORK_DIR = "/users/mleblan6/work/mucoll"
+OUTPUT_BASE_DIR = "/oscar/data/mleblan6/mucoll/batch_output/test_scan"
+WORK_DIR = "/users/mleblan6/work/bib"
 MUCOLL_BENCHMARKS_PATH = os.path.join(WORK_DIR, "mucoll-benchmarks")
-SCRIPT_PATH = os.path.join(WORK_DIR, "mucoll-slurm/run_chain.sh")
-APPTAINER_IMAGE = "docker://ghcr.io/muoncollidersoft/mucoll-sim-alma9:full_gaudi_test"
+SCRIPT_PATH = os.path.join(WORK_DIR, "mucoll-slurm/run_chain_pgun.sh")
+#APPTAINER_IMAGE = "docker://ghcr.io/muoncollidersoft/mucoll-sim-ubuntu24:main"
+# I have already pulled the image and converted it to a SIF, so we can use the local SIF directly to save time and bandwidth.
+# I did this with the following command:
+# apptainer pull --name mucoll-sim-ubuntu24:main.sif docker://ghcr.io/muoncollidersoft/mucoll-sim-ubuntu24:main
+APPTAINER_IMAGE = "/oscar/data/mleblan6/mucoll/mucoll-sim-ubuntu24:main.sif"
 DATA_DIR_TO_BIND = "/oscar/data/mleblan6/mucoll"
 
 # --- Scan Parameters ---
 # Define the lists of parameters to scan over
-PDG_LIST = [11, 13, 211]        # e.g., Electron, Muon, Pion
+PDG_LIST = [11, 13,211]        # e.g., Electron, Muon, Pion
 PT_LIST = [10, 50, 100]         # GeV
 THETA_LIST = [(10, 170), (30, 150), (80, 100)] # (Min, Max) degrees
 
@@ -67,11 +71,11 @@ for pdg, pt, (theta_min, theta_max) in combinations:
 #SBATCH --job-name={job_name}
 #SBATCH --output={log_dir}/job_{i}.out
 #SBATCH --error={log_dir}/job_{i}.err
-#SBATCH --time=04:00:00
-#SBATCH --mem=4G
+#SBATCH --ttime=04:00:00
+#SBATCH --mem=16G
 #SBATCH --nodes=1
 #SBATCH --ntasks=1
-#SBATCH --cpus-per-task=1
+#SBATCH --cpus-per-task=4
 
 echo "Running on host: $(hostname)"
 echo "Job Index: {i}"

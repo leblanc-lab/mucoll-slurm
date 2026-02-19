@@ -16,15 +16,13 @@ echo "Output directory: $OUTPUT_DIR"
 echo "Benchmarks path: $MUCOLL_BENCHMARKS_PATH"
 echo "Particle: PDG=$PDG, pT=$PT GeV, Theta=[$THETA_MIN, $THETA_MAX]"
 
-# Source the main environment setup
-# This assumes the workspace is mounted in the container
-source /users/mleblan6/work/mucoll/setup.sh
+# Source the main environment setup inside the container. This is the one that was moved from mucoll-slurm/ when setting up the work directory.
+source $MUCOLL_BENCHMARKS_PATH/../setup.sh
 
-# Setup for k4MuCPlayground
-cd $MUCOLL_BENCHMARKS_PATH/k4MuCPlayground
-# We need to source setup_digireco.sh. It expects to be in k4MuCPlayground or given a path.
-# We are in k4MuCPlayground, so passing ".." works as it expects the root of benchmarks.
-source setup_digireco.sh .. MAIA_v0
+# Setup detector geometry and PYTHONPATH for digi/reco steering files.
+# Source setup_digireco.sh from its location, passing the benchmarks path directly
+# so it can resolve absolute paths correctly regardless of cwd.
+source $MUCOLL_BENCHMARKS_PATH/k4MuCPlayground/setup_digireco.sh $MUCOLL_BENCHMARKS_PATH MAIA_v0
 
 # Create a temporary working directory
 WORKDIR=/tmp/mucoll_job_${JOB_ID}_${RANDOM}
