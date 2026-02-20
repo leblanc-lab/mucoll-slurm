@@ -1,0 +1,69 @@
+# MUMU_Hadrons_10TeV
+########################################################################
+# mu mu -> hadrons via WW and ZZ scattering at 10 TeV
+# Matt LeBlanc, Brown University 2026
+# matt_leblanc@brown.edu
+#########################################################################
+#
+model = SM
+
+# Set widths and masses
+# Take uds as light ...
+ms = 0
+mc = 1.27 GeV
+mb = 4.18 GeV
+
+me     = 0.5109989e-3 GeV
+mmu    = 0.10565837 GeV
+mtop   = 174 GeV
+wtop   = 1.37 GeV
+mW     = 80.45 GeV
+wW     = 2.071 GeV
+mZ     = 91.188 GeV
+wZ     = 2.478 GeV
+mH     = 125 GeV
+wH     = 0.00407 GeV 
+
+# Define aliases
+# For WW scattering (charged current), we'll end up with final state neutrinos
+alias NNU = nue:numu:nutau
+alias ANU = nuebar:numubar:nutaubar
+
+# Process: mu- mu+ -> nu_mu nu_mu_bar q qbar
+# We can't include c and b here as the aliased particle masses must be the same 
+# ... we add them in later, separately
+alias q_light = u:d:s
+alias Q_light = U:D:S
+
+# CoM Energy and seed
+sqrts = 10 TeV
+seed = 1234
+
+# WW fusion to hadrons (charged current)
+# mu- mu+ -> nu_mu nu_mu_bar + quarks
+# Accounting for c and b quark masses: https://answers.launchpad.net/whizard/+question/689294
+process ww_to_hadrons = "e2", "E2" => ("n2", "N2", q_light, Q_light) + ("n2", "N2", c, C) + ("n2", "N2", b, B)
+
+# Compile the matrix elements 
+compile
+
+# Define cut on outgoing neutrinos to ensure we are in the VBF/VBS regime
+cuts = all M > 150 GeV [NNU, ANU]
+
+# Parton shower and hadronization done with Pythia8 
+?ps_fsr_active = true
+?hadronization_active = true
+?allow_shower = true
+
+$shower_method = "PYTHIA8"
+$hadronization_method = "PYTHIA8"
+
+# Integration
+integrate (ww_to_hadrons) { iterations = 5:50000, 10:100000 }
+
+# Generate WW -> Hadrons events
+simulate (ww_to_hadrons) {
+  n_events = 1000
+  $sample = "mumu_ww_hadrons_10TeV"
+  sample_format = hepmc
+}

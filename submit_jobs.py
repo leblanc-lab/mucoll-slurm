@@ -9,6 +9,8 @@ OUTPUT_BASE_DIR = "/oscar/data/mleblan6/mucoll/batch_output"
 WORK_DIR = "/users/mleblan6/work/bib"
 MUCOLL_BENCHMARKS_PATH = os.path.join(WORK_DIR, "mucoll-benchmarks")
 SCRIPT_PATH = os.path.join(WORK_DIR, "mucoll-slurm/run_chain_pgun.sh")
+# SCRIPT_PATH = os.path.join(WORK_DIR, "mucoll-slurm/run_chain_WWZ_hadronic.sh")
+# SCRIPT_PATH = os.path.join(WORK_DIR, "mucoll-slurm/run_chain_ZZZ_hadronic.sh")
 #APPTAINER_IMAGE = "docker://ghcr.io/muoncollidersoft/mucoll-sim-ubuntu24:main" 
 # I have already pulled the image and converted it to a SIF, so we can use the local SIF directly to save time and bandwidth.
 # I did this with the following command:
