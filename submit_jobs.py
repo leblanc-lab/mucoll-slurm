@@ -67,7 +67,7 @@ apptainer exec --bind {DATA_DIR_TO_BIND},{WORK_DIR} {APPTAINER_IMAGE} bash {SCRI
         
     # Submit the job
     try:
-        subprocess.run("cat " + script_filename, shell=True, check=True)
+        # subprocess.run("cat " + script_filename, shell=True, check=True)
         result = subprocess.run(["sbatch", script_filename], capture_output=True, text=True, check=True)
         print(f"Submitted job {job_id}: {result.stdout.strip()}")
     except subprocess.CalledProcessError as e:
