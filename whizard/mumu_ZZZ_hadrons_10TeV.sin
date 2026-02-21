@@ -1,6 +1,6 @@
 # MUMU_Hadrons_10TeV
 ########################################################################
-# mu mu -> hadrons via WW and ZZ scattering at 10 TeV
+# mu mu -> hadrons via ZZ scattering at 10 TeV
 # Matt LeBlanc, Brown University 2026
 # matt_leblanc@brown.edu
 #########################################################################
@@ -55,7 +55,6 @@ $shower_method = "PYTHIA8"
 $hadronization_method = "PYTHIA8"
 
 # Integration
-integrate (ww_to_hadrons) { iterations = 5:50000, 10:100000 }
 integrate (zz_to_hadrons) { iterations = 5:50000, 10:100000 }
 
 # Generate ZZ -> Hadrons events
