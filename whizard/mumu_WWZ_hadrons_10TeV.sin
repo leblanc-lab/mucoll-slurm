@@ -1,6 +1,6 @@
 # MUMU_Hadrons_10TeV
 ########################################################################
-# mu mu -> hadrons via WW and ZZ scattering at 10 TeV
+# mu mu -> hadrons via WW scattering at 10 TeV
 # Matt LeBlanc, Brown University 2026
 # matt_leblanc@brown.edu
 #########################################################################
@@ -48,7 +48,8 @@ process ww_to_hadrons = "e2", "E2" => ("n2", "N2", q_light, Q_light) + ("n2", "N
 compile
 
 # Define cut on outgoing neutrinos to ensure we are in the VBF/VBS regime
-cuts = all M > 150 GeV [NNU, ANU]
+cuts = all M > 150 GeV [NNU, ANU] and
+       all Pt > 5 GeV [NNU, ANU]
 
 # Parton shower and hadronization done with Pythia8 
 ?ps_fsr_active = true
@@ -59,7 +60,8 @@ $shower_method = "PYTHIA8"
 $hadronization_method = "PYTHIA8"
 
 # Integration
-integrate (ww_to_hadrons) { iterations = 5:50000, 10:100000 }
+integrate (ww_to_hadrons) { iterations = 5:50000:"gw", 10:100000 }
+
 
 # Generate WW -> Hadrons events
 simulate (ww_to_hadrons) {

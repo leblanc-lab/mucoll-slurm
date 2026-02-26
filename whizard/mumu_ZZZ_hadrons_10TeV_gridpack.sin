@@ -1,0 +1,48 @@
+# MUMU_Hadrons_10TeV - ZZ Neutral Current - Grid Integration Only
+########################################################################
+# mu mu -> hadrons via ZZ scattering at 10 TeV
+# Matt LeBlanc, Brown University 2026
+# matt_leblanc@brown.edu
+#
+# This card only runs the phase-space integration and writes the VAMP
+# grid files (.vg). It should be run once with many CPUs and a long
+# walltime. The resulting grids can then be loaded by downstream
+# production jobs with ?rebuild_grids = false, skipping re-integration.
+#########################################################################
+#
+model = SM
+
+# Set widths and masses
+
+ms = 0
+mc = 1.27 GeV
+mb = 4.18 GeV
+
+me     = 0.5109989e-3 GeV
+mmu    = 0.10565837 GeV
+mtop   = 174 GeV
+wtop   = 1.37 GeV
+mW     = 80.45 GeV
+wW     = 2.071 GeV
+mZ     = 91.188 GeV
+wZ     = 2.478 GeV
+mH     = 125 GeV
+wH     = 0.00407 GeV
+
+alias q_light = u:d:s
+alias Q_light = U:D:S
+
+sqrts = 10 TeV
+seed = 1234
+
+process zz_to_hadrons = "e2", "E2" => ("e2", "E2", q_light, Q_light) + ("e2", "E2", c, C) + ("e2", "E2", b, B)
+
+compile
+
+cuts = all M > 150 GeV [e2, E2] and
+       all Pt > 5 GeV [e2, E2]
+
+# High-statistics integration matching the production iteration parameters exactly.
+# Using identical parameters means production jobs start from the fully-converged
+# grid without re-optimising channels or bins.
+integrate (zz_to_hadrons) { iterations = 5:50000:"gw", 10:100000 }

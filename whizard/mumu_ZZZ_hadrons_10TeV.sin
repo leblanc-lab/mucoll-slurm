@@ -44,7 +44,8 @@ compile
 
 # Define cut on outgoing muon-antimuon to ensure we are in the VBF/VBS regime
 # Helpful: https://whizard.hepforge.org/manual/manual006.html 
-cuts = all M > 150 GeV [e2, E2]
+cuts = all M > 150 GeV [e2, E2] and
+       all Pt > 5 GeV [e2, E2]
 
 # Parton shower and hadronization done with Pythia8 
 ?ps_fsr_active = true
@@ -55,7 +56,7 @@ $shower_method = "PYTHIA8"
 $hadronization_method = "PYTHIA8"
 
 # Integration
-integrate (zz_to_hadrons) { iterations = 5:50000, 10:100000 }
+integrate (zz_to_hadrons) { iterations = 5:50000:"gw", 10:100000 }
 
 # Generate ZZ -> Hadrons events
 simulate (zz_to_hadrons) {
