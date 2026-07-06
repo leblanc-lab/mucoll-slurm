@@ -67,7 +67,7 @@ GEN_T_MAX=""
 GEN_NE_MIN=""
 
 # ----- Per-step wall-time requests -----
-GEN_TIME="01:00:00"
-SIM_TIME="03:00:00"
-DIGI_TIME="02:00:00"
+GEN_TIME="02:00:00"
+SIM_TIME="04:00:00"
+DIGI_TIME="03:00:00"
 RECO_TIME="06:00:00"
