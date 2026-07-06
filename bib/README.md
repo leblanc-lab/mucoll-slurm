@@ -6,6 +6,10 @@ Shifter with the `mucoll-sim-ubuntu24:v3.0` image. Ported from the old
 `~/bib/mucoll-slurm/bib` toolkit and adapted to the new benchmarks steering
 (`setup_config.sh`, `--inputFiles/--outputFile`, `--numThreads`).
 
+**These scripts are intended to be run on Perlmutter (NERSC), using PyTaskFarmer to manage the batch jobs!**
+
+https://gitlab.cern.ch/berkeleylab/pytaskfarmer
+
 ## Files
 - `config.sh` — the one file to edit: paths, image, geometry, per-step
   nodes/workers/threads/wall-time.
