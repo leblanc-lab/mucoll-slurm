@@ -25,7 +25,7 @@ cd mucoll-slurm/bib
 
 # 0. One-time: pull the image   shifterimg pull ghcr.io/muoncollidersoft/mucoll-sim-ubuntu24:v3.0
 
-# 1. Smoke-test the whole chain on a login node (uses the real run_*.sh)
+# 1. Test the whole chain on a login node (uses the real run_*.sh)
 bash test_chain_single.sh
 
 # 2. Small test batch (debug QoS, 4 files → 8 tasks/step)
