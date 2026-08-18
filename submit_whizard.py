@@ -40,8 +40,8 @@ def main():
     if not os.path.exists(cfg["WHIZARD_IMAGE"]):
         raise SystemExit(
             f"Error: WHIZARD_IMAGE not found at {cfg['WHIZARD_IMAGE']}.\n"
-            "The v3.0 sim image has no Whizard; set WHIZARD_IMAGE in config.sh to a\n"
-            "Whizard-capable image (e.g. the previous mucoll-sim-ubuntu24:main.sif)."
+            "Set WHIZARD_IMAGE in config.sh to a v3.1 (or newer) sim image "
+            "that includes the generator layer."
         )
 
     gridpack = GRIDPACK_DIR  # "" disables gridpacks (full integration each job)

@@ -1,13 +1,13 @@
 #!/bin/bash
 # ============================================================================
-# BIB Production Workflow (v3.0 image, Perlmutter) — Central Configuration
+# BIB Production Workflow (v3.1 image, Perlmutter) — Central Configuration
 # ============================================================================
 # FLUKA -> GEN -> SIM -> DIGI -> RECO produced as FOUR separate sets of batch
 # jobs, each driven by PyTaskFarmer (N workers/node consuming a shared task
 # list). Sourced by test_chain_single.sh and parsed by submit_bib.py.
 #
 # This is the Perlmutter/Shifter port of the old ~/bib toolkit, adapted to the
-# v3.0 container and the new mucoll-benchmarks steering conventions.
+# v3.1 container and the current mucoll-benchmarks steering conventions.
 # ============================================================================
 
 # ----- Input / Output -----
@@ -16,16 +16,16 @@ FLUKA_INPUT_DIR="/global/cfs/cdirs/m5197/data/bib/10TeV-2024/Fluka/joined_data"
 
 # Base output directory. Subfolders GEN/ SIM/ DIGI/ RECO/ logs/ are created
 # automatically, each with MUPLUS/ and MUMINUS/ beam subdirectories.
-OUTPUT_BASE="/global/cfs/cdirs/m5197/mleblanc/MuonCollider/data/bib-v3p0-fmt2-norm1"
+OUTPUT_BASE="/global/cfs/cdirs/m5197/mleblanc/MuonCollider/data/bib-v3p1-fmt2-norm1"
 
 # ----- Software Paths -----
-# Path to the mucoll-benchmarks checkout (the new v3.0 benchmark working dir).
+# Path to the mucoll-benchmarks checkout (the current benchmark working dir).
 # NERSC Shifter auto-mounts $HOME at the same absolute path inside the
 # container, so the real host path works directly.
 MUCOLL_BENCHMARKS="${BIB_ROOT:-/global/homes/m/mleblanc/benchmark}/mucoll-benchmarks"
 
 # Container image (Shifter docker ref; pull once with `shifterimg pull <ref>`).
-CONTAINER_IMAGE="ghcr.io/muoncollidersoft/mucoll-sim-ubuntu24:v3.0"
+CONTAINER_IMAGE="ghcr.io/muoncollidersoft/mucoll-sim-ubuntu24:v3.1"
 
 # Detector geometry name (MAIA_v0, MuSIC_v0, MuColl_v1, ...)
 DETECTOR_GEOM="MAIA_v0"

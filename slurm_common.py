@@ -66,7 +66,7 @@ def validate_paths(cfg):
     if not os.path.exists(cfg["IMAGE"]):
         raise SystemExit(
             f"Error: container image not found at {cfg['IMAGE']}.\n"
-            "Pull the v3.0 image first (see README.md) or fix IMAGE in config.sh."
+            "Pull the v3.1 image first (see README.md) or fix IMAGE in config.sh."
         )
 
 

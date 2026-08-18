@@ -1,7 +1,7 @@
 # mucoll-slurm
 
 Run the Muon Collider simulation chain (**GEN → SIM → DIGI → RECO**) on Oscar,
-both interactively and as SLURM batch jobs, using the **mucoll-spack v3.0**
+both interactively and as SLURM batch jobs, using the **mucoll-spack v3.1**
 container image. Particle-gun studies can be run **with or without BIB**
 
 ---
@@ -26,10 +26,10 @@ Your tree should look like:
 └── mucoll-benchmarks/   <- MuonColliderSoft main, with configs/MAIAConfig etc.
 ```
 
-The v3.0 image has already been pulled and is cached in the shared group data directory:
+The v3.1 image should be pulled once into the shared group data directory:
 
 ```
-/oscar/data/mleblan6/mucoll/mucoll-sim-ubuntu24:v3.0.sif
+/oscar/data/mleblan6/mucoll/mucoll-sim-ubuntu24:v3.1.sif
 ```
 
 If you ever need to re-pull it e.g. on another cluster or with an updated image, you can do so with:
@@ -38,8 +38,8 @@ If you ever need to re-pull it e.g. on another cluster or with an updated image,
 export APPTAINER_TMPDIR=/oscar/scratch/$USER/apptainer_tmp
 export APPTAINER_CACHEDIR=/oscar/scratch/$USER/apptainer_cache
 mkdir -p $APPTAINER_TMPDIR $APPTAINER_CACHEDIR
-apptainer pull mucoll-sim-ubuntu24:v3.0.sif \
-    docker://ghcr.io/muoncollidersoft/mucoll-sim-ubuntu24:v3.0
+apptainer pull mucoll-sim-ubuntu24:v3.1.sif \
+    docker://ghcr.io/muoncollidersoft/mucoll-sim-ubuntu24:v3.1
 ```
 
 Finally, open [`config.sh`](config.sh) and skim it. Most values auto-detect; the
@@ -59,7 +59,7 @@ live at the top of each `submit_*.py`.
 
 ```bash
 source scripts/interact.sh     # grab a worker node (don't run on the login nodes!)
-source scripts/shell.sh        # enter the v3.0 container
+source scripts/shell.sh        # enter the v3.1 container
 source scripts/setup.sh        # set up the spack environment
 ```
 
@@ -128,9 +128,32 @@ python submit_pgun_scan.py
 This creates `$OUTPUT_BASE_DIR/scan[_bib]/pdg{P}_pt{T}_theta{lo}-{hi}/job_N/`.
 
 
+## 4. Generate benchmark GEN inputs on NERSC
+
+The canonical muon, electron, pion, and photon GEN fixtures can be generated in
+one short Slurm job. The submitter pins the smaller v3.1 analysis image (GEN
+does not need Geant4/reconstruction) and always defaults to the NERSC `debug`
+QoS:
+
+```bash
+# One-time image import on a NERSC login node
+shifterimg pull ghcr.io/muoncollidersoft/mucoll-analysis-ubuntu24:v3.1
+
+# Inspect the generated batch script without submitting
+python submit_benchmark_gen.py --dry-run
+
+# Generate 10,000 events for each particle
+python submit_benchmark_gen.py
+```
+
+By default the outputs go under
+`/global/cfs/cdirs/m5197/mleblanc/MuonCollider/data/benchmark-inputs/v1/`.
+Use `--output-dir` to stage them elsewhere. The job also writes `manifest.json`
+with checksums, kinematics, seed, benchmark commit, and container provenance.
+
 ---
 
-## 4. Whizard signal production (advanced)
+## 5. Whizard signal production (advanced)
 
 [`submit_whizard.py`](submit_whizard.py) drives the Whizard WWZ/ZZZ hadronic
 chains (steering `.sin` files live in [`whizard/`](whizard/)):
@@ -141,11 +164,7 @@ chains (steering `.sin` files live in [`whizard/`](whizard/)):
    `GRIDPACK_DIR` to the grids from step 1 (leave `""` to integrate in-job),
    then `python submit_whizard.py`.
 
-> **Known limitation (signal only):** the v3.0 *sim* image has no Whizard, while
-> the digi/reco configs now target v3.0. So the single-container WWZ/ZZZ chains
-> can't yet run generation (needs a Whizard image, `WHIZARD_IMAGE` in
-> `config.sh`) and v3.0 digi/reco in one job — that needs a gen→reco image split.
-> The chains are wired to the new layout and guard loudly on a missing Whizard.
-> **Particle-gun studies (the intern workflow) are fully working on v3.0.**
+The v3.1 simulation image includes the event-generator layer, so the Whizard and
+particle-gun chains use the same pinned SIF configured in `config.sh`.
 
 ---

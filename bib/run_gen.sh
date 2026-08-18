@@ -1,6 +1,6 @@
 #!/bin/bash
 # ============================================================================
-# BIB GEN Step (v3.0): FLUKA binary -> EDM4HEP MCParticles
+# BIB GEN Step (v3.1): FLUKA binary -> EDM4HEP MCParticles
 # ============================================================================
 # Usage: bash run_gen.sh <input.dat> <output.edm4hep.root> <benchmarks_path>
 #                        [bx_time] [normalization] [extra flags...]
@@ -17,14 +17,14 @@ shift 5
 EXTRA_FLAGS=("$@")   # pre-built optional flags from submit_bib.py (-z, --pdgs, ...)
 
 echo "=========================================="
-echo " BIB GEN Step (v3.0)"
+echo " BIB GEN Step (v3.1)"
 echo " Input:  ${INPUT_FILE}"
 echo " Output: ${OUTPUT_FILE}"
 echo " Extra:  ${EXTRA_FLAGS[*]:-(none)}"
 echo " Host:   $(hostname)"
 echo "=========================================="
 
-# --- Container software stack (v3.0 official entry point, glob fallback) -----
+# --- Container software stack (v3.1 official entry point, glob fallback) -----
 if [[ -f /opt/setup_mucoll.sh ]]; then
     source /opt/setup_mucoll.sh
 else

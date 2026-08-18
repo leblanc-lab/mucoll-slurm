@@ -9,7 +9,7 @@
 #  Quick start:
 #    1. Make sure your output area exists:  the scripts create it for you under
 #       OUTPUT_BASE_DIR below, but you need write access to DATA_GROUP_DIR.
-#    2. (One time) pull the v3.0 image to a shared SIF -- see README.md.
+#    2. (One time) pull the v3.1 image to a shared SIF -- see README.md.
 #    3. Run:  python submit_pgun.py        (particle gun, no BIB)
 #       or flip BIB=True inside submit_pgun.py for "with BIB".
 # =============================================================================
@@ -26,18 +26,15 @@ export MUCOLL_BENCHMARKS_PATH="$WORK_DIR/mucoll-benchmarks"
 # writes to their own $USER subdirectory inside it.
 export DATA_GROUP_DIR="/oscar/data/mleblan6/mucoll"
 
-# --- Container image (mucoll-spack v3.0, sim layer, ubuntu24) -----------------
+# --- Container image (mucoll-spack v3.1, sim layer, ubuntu24) -----------------
 # One-time pull (see README.md):
-#   apptainer pull "$DATA_GROUP_DIR/mucoll-sim-ubuntu24:v3.0.sif" \
-#       docker://ghcr.io/muoncollidersoft/mucoll-sim-ubuntu24:v3.0
-export IMAGE="$DATA_GROUP_DIR/mucoll-sim-ubuntu24:v3.0.sif"
+#   apptainer pull "$DATA_GROUP_DIR/mucoll-sim-ubuntu24:v3.1.sif" \
+#       docker://ghcr.io/muoncollidersoft/mucoll-sim-ubuntu24:v3.1
+export IMAGE="$DATA_GROUP_DIR/mucoll-sim-ubuntu24:v3.1.sif"
 
-# TEMPORARY FOR WHIZARD RUNNING
 # Image used for the Whizard *signal* chains (submit_whizard.py, make_gridpack.py).
-# NOTE: the v3.0 sim image does NOT bundle Whizard, so signal production needs a
-# Whizard-capable image here (e.g. the previous main SIF). Particle-gun studies
-# (submit_pgun.py / submit_pgun_scan.py) are unaffected and use $IMAGE above.
-export WHIZARD_IMAGE="$DATA_GROUP_DIR/mucoll-sim-ubuntu24:main.sif"
+# The v3.1 sim image includes the event-generator layer, including Whizard.
+export WHIZARD_IMAGE="$DATA_GROUP_DIR/mucoll-sim-ubuntu24:v3.1.sif"
 
 # --- Detector geometry -------------------------------------------------------
 export GEOM_NAME="MAIA_v0"

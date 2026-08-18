@@ -5,7 +5,7 @@
 # Runs a SINGLE FLUKA file through the full chain using the exact same
 # run_*.sh scripts, container image, geometry and thread counts that the batch
 # jobs use (all read from config.sh). Run this on a login node BEFORE launching
-# the full production to confirm the v3.0 image and every step work end to end.
+# the full production to confirm the v3.1 image and every step work end to end.
 #
 # Usage:
 #   bash mucoll-slurm/bib/test_chain_single.sh [FLUKA_INDEX]
@@ -34,7 +34,7 @@ DIGI="${TESTDIR}/digi.edm4hep.root"
 RECO="${TESTDIR}/reco.edm4hep.root"
 
 echo "=============================================================="
-echo " BIB full-chain smoke test (v3.0)"
+echo " BIB full-chain smoke test (v3.1)"
 echo "   Image      : ${CONTAINER_IMAGE}"
 echo "   Benchmarks : ${MUCOLL_BENCHMARKS}"
 echo "   Geometry   : ${DETECTOR_GEOM}"

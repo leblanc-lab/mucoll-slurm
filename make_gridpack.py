@@ -24,7 +24,7 @@ _cfg                   = sc.load_config()
 WORK_DIR               = _cfg["WORK_DIR"]
 MUCOLL_BENCHMARKS_PATH = _cfg["MUCOLL_BENCHMARKS_PATH"]
 GRIDPACK_DIR           = os.path.join(_cfg["DATA_GROUP_DIR"], "gridpacks")
-# Whizard is not in the v3.0 sim image, so gridpack generation uses WHIZARD_IMAGE.
+# Keep the image selectable independently even though v3.1 includes Whizard.
 APPTAINER_IMAGE        = _cfg["WHIZARD_IMAGE"]
 DATA_DIR_TO_BIND       = _cfg["DATA_BIND"]
 LOG_DIR                = os.path.join(GRIDPACK_DIR, "logs")

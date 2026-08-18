@@ -25,7 +25,7 @@ source "$SCRIPT_DIR/../scripts/setup.sh"
 # Setup detector geometry and PYTHONPATH for digi/reco steering files.
 source "$MUCOLL_BENCHMARKS_PATH/setup_config.sh" "$MUCOLL_BENCHMARKS_PATH" "$GEOM_NAME"
 
-# Whizard is required for signal generation but is NOT in the v3.0 sim image.
+# Whizard is provided by the v3.1 sim image's generator layer.
 if ! command -v whizard >/dev/null 2>&1; then
     echo "ERROR: 'whizard' not found in this image. Signal production needs a" >&2
     echo "       Whizard-capable image -- set WHIZARD_IMAGE in config.sh." >&2

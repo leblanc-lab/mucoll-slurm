@@ -1,6 +1,6 @@
 #!/bin/bash
 # ============================================================================
-# BIB DIGI Step (v3.0): Digitization via k4run
+# BIB DIGI Step (v3.1): Digitization via k4run
 # ============================================================================
 # Usage: bash run_digi.sh <input_sim.edm4hep.root> <output_digi.edm4hep.root>
 #                         <benchmarks_path> <detector_geom> [num_threads]
@@ -15,7 +15,7 @@ DETECTOR_GEOM="${4:-MAIA_v0}"
 NUM_THREADS="${5:-1}"
 
 echo "=========================================="
-echo " BIB DIGI Step (v3.0)"
+echo " BIB DIGI Step (v3.1)"
 echo " Input:   ${INPUT_FILE}"
 echo " Output:  ${OUTPUT_FILE}"
 echo " Geom:    ${DETECTOR_GEOM}"
@@ -23,7 +23,7 @@ echo " Threads: ${NUM_THREADS}"
 echo " Host:    $(hostname)"
 echo "=========================================="
 
-# --- Container software stack (v3.0 official entry point, glob fallback) -----
+# --- Container software stack (v3.1 official entry point, glob fallback) -----
 if [[ -f /opt/setup_mucoll.sh ]]; then
     source /opt/setup_mucoll.sh
 else

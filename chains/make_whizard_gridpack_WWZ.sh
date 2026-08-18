@@ -10,8 +10,8 @@
 
 WORK_DIR=/oscar/home/mleblan6/work/MaiaV3
 GRIDPACK_DIR=/oscar/data/mleblan6/mucoll/gridpacks/WWZ
-# TEMP NOTE: Whizard is not in the v3.0 sim image; use a Whizard-capable image here.
-SIF=/oscar/data/mleblan6/mucoll/mucoll-sim-ubuntu24:main.sif
+# The v3.1 sim layer includes Whizard.
+SIF=/oscar/data/mleblan6/mucoll/mucoll-sim-ubuntu24:v3.1.sif
 SIN_TEMPLATE=$WORK_DIR/mucoll-slurm/whizard/mumu_WWZ_hadrons_10TeV_gridpack.sin
 
 mkdir -p $GRIDPACK_DIR

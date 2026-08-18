@@ -1,6 +1,6 @@
 #!/bin/bash
 # ============================================================================
-# BIB SIM Step (v3.0): Geant4 detector simulation via ddsim
+# BIB SIM Step (v3.1): Geant4 detector simulation via ddsim
 # ============================================================================
 # Usage: bash run_sim.sh <input_gen.edm4hep.root> <output_sim.edm4hep.root>
 #                        <benchmarks_path> <detector_geom>
@@ -14,14 +14,14 @@ MUCOLL_BENCHMARKS="${3:?}"
 DETECTOR_GEOM="${4:-MAIA_v0}"
 
 echo "=========================================="
-echo " BIB SIM Step (v3.0)"
+echo " BIB SIM Step (v3.1)"
 echo " Input:  ${INPUT_FILE}"
 echo " Output: ${OUTPUT_FILE}"
 echo " Geom:   ${DETECTOR_GEOM}"
 echo " Host:   $(hostname)"
 echo "=========================================="
 
-# --- Container software stack (v3.0 official entry point, glob fallback) -----
+# --- Container software stack (v3.1 official entry point, glob fallback) -----
 if [[ -f /opt/setup_mucoll.sh ]]; then
     source /opt/setup_mucoll.sh
 else
@@ -50,7 +50,7 @@ TIMED=()
 [[ -x /usr/bin/time ]] && TIMED=(/usr/bin/time -v -o "${OUTPUT_FILE}.time.log" --)
 
 # BIB GEN writes exactly one event per file (one bunch crossing). We simulate
-# that single event explicitly: v3.0's podio throws "reading beyond bounds" if
+# that single event explicitly: podio throws "reading beyond bounds" if
 # ddsim is told to read all events (-1) and steps past the last frame.
 CMD=(ddsim --steeringFile "${MUCOLL_BENCHMARKS}/simulation/steer_baseline.py"
      --numberOfEvents 1

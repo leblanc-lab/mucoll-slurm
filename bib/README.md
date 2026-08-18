@@ -1,8 +1,8 @@
-# BIB production (v3.0, Perlmutter)
+# BIB production (v3.1, Perlmutter)
 
 FLUKA → GEN → SIM → DIGI → RECO run as **four separate sets of batch jobs**,
 each driven by PyTaskFarmer (N workers/node consuming a shared task list) via
-Shifter with the `mucoll-sim-ubuntu24:v3.0` image. Ported from the old
+Shifter with the `mucoll-sim-ubuntu24:v3.1` image. Ported from the old
 `~/bib/mucoll-slurm/bib` toolkit and adapted to the new benchmarks steering
 (`setup_config.sh`, `--inputFiles/--outputFile`, `--numThreads`).
 
@@ -23,7 +23,7 @@ https://gitlab.cern.ch/berkeleylab/pytaskfarmer
 ```bash
 cd mucoll-slurm/bib
 
-# 0. One-time: pull the image   shifterimg pull ghcr.io/muoncollidersoft/mucoll-sim-ubuntu24:v3.0
+# 0. One-time: pull the image   shifterimg pull ghcr.io/muoncollidersoft/mucoll-sim-ubuntu24:v3.1
 
 # 1. Test the whole chain on a login node (uses the real run_*.sh)
 bash test_chain_single.sh
