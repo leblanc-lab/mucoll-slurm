@@ -1,0 +1,70 @@
+# MUMU_Z_Hadrons_10TeV
+########################################################################
+# mu mu -> q qbar via s-channel Z/gamma* at 10 TeV (monochromatic
+# beams, no ISR): m(qqbar) is pinned at sqrts = 10 TeV.
+# Matt LeBlanc, Brown University 2026
+# matt_leblanc@brown.edu
+#########################################################################
+#
+model = SM
+
+# Set widths and masses
+# Take uds as light ...
+ms = 0
+mc = 1.27 GeV
+mb = 4.18 GeV
+
+me     = 0.5109989e-3 GeV
+mmu    = 0.10565837 GeV
+mtop   = 174 GeV
+wtop   = 1.37 GeV
+mW     = 80.45 GeV
+wW     = 2.071 GeV
+mZ     = 91.188 GeV
+wZ     = 2.478 GeV
+mH     = 125 GeV
+wH     = 0.00407 GeV
+
+# Define aliases
+# We can't include c and b here as the aliased particle masses must be the same ... we add them in later, separately
+alias q_light = u:d:s
+alias Q_light = U:D:S
+
+# CoM Energy and seed
+sqrts = 10 TeV
+seed = 1234
+
+# s-channel Z/gamma* annihilation to hadrons (full interference, no diagram restriction)
+# Accounting for c and b quark masses: https://answers.launchpad.net/whizard/+question/689294
+process z_to_hadrons = "e2", "E2" => (q_light, Q_light) + (c, C) + (b, B)
+
+# Compile the matrix elements
+compile
+
+# No cuts: pure s-channel 2->2 with monochromatic beams -- there are no
+# t/u-channel poles and no soft/collinear singularities; the partonic
+# invariant mass is fixed at sqrts.
+
+# Parton shower and hadronization done with Pythia6.
+# NOTE: do not switch this card to PYTHIA8. The WHIZARD 3.1.5 internal
+# PYTHIA8 interface breaks energy conservation when hadronizing the
+# massive c/b quark strings of this s-channel 2->2 at 10 TeV (E leaks of
+# up to ~70 GeV in ~95% of c/b events; with default checks the Pythia8
+# instance aborts after ~10 events). The PYTHIA6 interface conserves
+# E/p exactly for all flavors (validated 2026-10, mucoll-sim-ubuntu24).
+?ps_fsr_active = true
+?hadronization_active = true
+?allow_shower = true
+
+$shower_method = "PYTHIA6"
+$hadronization_method = "PYTHIA6"
+
+# Integration (trivial 2->2 phase space; converges in seconds)
+integrate (z_to_hadrons) { iterations = 3:10000:"gw", 3:10000 }
+
+# Generate Z/gamma* -> Hadrons events
+simulate (z_to_hadrons) {
+  n_events = 1000
+  $sample = "mumu_z_hadrons_10TeV"
+  sample_format = hepmc
+}

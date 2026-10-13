@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Submit Whizard *signal* production jobs (WWZ / ZZZ hadronic) to SLURM.
+"""Submit Whizard *signal* production jobs (WWZ / ZZZ / Z / Z_RR hadronic) to SLURM.
 
 For particle-gun studies use submit_pgun.py instead -- this script drives the
 Whizard chains, which take a different (positional) argument convention and an
@@ -21,6 +21,10 @@ NEVENTS_PER_JOB = 100
 PROCESSES = [
     ("WWZ", "chains/run_chain_WWZ_hadronic.sh"),
     # ("ZZZ", "chains/run_chain_ZZZ_hadronic.sh"),
+    # s-channel Z/gamma* -> qqbar at full energy (no ISR)
+    # ("Z", "chains/run_chain_Z_hadronic.sh"),
+    # ISR radiative return to the Z pole (60-120 GeV window)
+    # ("Z_RR", "chains/run_chain_Z_RR_hadronic.sh"),
 ]
 
 # Pre-computed Whizard VAMP grids (from make_gridpack.py). Leave "" to run the

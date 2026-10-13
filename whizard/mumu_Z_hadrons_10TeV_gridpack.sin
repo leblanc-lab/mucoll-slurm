@@ -1,0 +1,49 @@
+# MUMU_Z_Hadrons_10TeV - s-channel Z/gamma* - Grid Integration Only
+########################################################################
+# mu mu -> q qbar via s-channel Z/gamma* at 10 TeV (monochromatic
+# beams, no ISR)
+# Matt LeBlanc, Brown University 2026
+# matt_leblanc@brown.edu
+#
+# This card only runs the phase-space integration and writes the VAMP
+# grid files (.vg). It should be run once with many CPUs and a long
+# walltime. The resulting grids can then be loaded by downstream
+# production jobs with ?rebuild_grids = false, skipping re-integration.
+#########################################################################
+#
+model = SM
+
+# Set widths and masses
+
+ms = 0
+mc = 1.27 GeV
+mb = 4.18 GeV
+
+me     = 0.5109989e-3 GeV
+mmu    = 0.10565837 GeV
+mtop   = 174 GeV
+wtop   = 1.37 GeV
+mW     = 80.45 GeV
+wW     = 2.071 GeV
+mZ     = 91.188 GeV
+wZ     = 2.478 GeV
+mH     = 125 GeV
+wH     = 0.00407 GeV
+
+alias q_light = u:d:s
+alias Q_light = U:D:S
+
+sqrts = 10 TeV
+seed = 1234
+
+process z_to_hadrons = "e2", "E2" => (q_light, Q_light) + (c, C) + (b, B)
+
+compile
+
+# No cuts: pure s-channel 2->2 with monochromatic beams -- there are no
+# t/u-channel poles and no soft/collinear singularities.
+
+# High-statistics integration matching the production iteration parameters exactly.
+# Using identical parameters means production jobs start from the fully-converged
+# grid without re-optimising channels or bins.
+integrate (z_to_hadrons) { iterations = 3:10000:"gw", 3:10000 }
