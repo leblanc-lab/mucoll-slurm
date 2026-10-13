@@ -3,7 +3,7 @@
 make_gridpack.py
 
 Submits Slurm jobs to run Whizard phase-space integration and write VAMP
-grid files (.vg) for the WWZ and ZZZ hadronic processes at 10 TeV.
+grid files (.vg) for the WWZ/ZZZ/Z/Z_RR hadronic processes at 10 TeV.
 This should be run once before submitting production jobs.
 
 The resulting grid files are saved under GRIDPACK_DIR/<process>/grids/ and can
@@ -55,6 +55,20 @@ PROCESSES = {
             WHIZARD_SIN_DIR, "mumu_ZZZ_hadrons_10TeV_gridpack.sin"
         ),
         "workdir":  os.path.join(GRIDPACK_DIR, "grid_mumu_ZZZ_hadrons"),
+    },
+    # s-channel Z/gamma* -> qqbar at full energy (no ISR)
+    "Z": {
+        "sin_template": os.path.join(
+            WHIZARD_SIN_DIR, "mumu_Z_hadrons_10TeV_gridpack.sin"
+        ),
+        "workdir":  os.path.join(GRIDPACK_DIR, "grid_mumu_Z_hadrons"),
+    },
+    # ISR radiative return to the Z pole (60-120 GeV window)
+    "Z_RR": {
+        "sin_template": os.path.join(
+            WHIZARD_SIN_DIR, "mumu_Z_RR_hadrons_10TeV_gridpack.sin"
+        ),
+        "workdir":  os.path.join(GRIDPACK_DIR, "grid_mumu_Z_RR_hadrons"),
     },
 }
 

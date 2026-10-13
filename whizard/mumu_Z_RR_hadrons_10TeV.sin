@@ -1,0 +1,94 @@
+# MUMU_Z_RR_Hadrons_10TeV
+########################################################################
+# mu mu -> q qbar: radiative return to the Z at a 10 TeV muon collider.
+# Muon-beam ISR structure functions on both beams let the qqbar system
+# return to the Z pole; the partonic mass is restricted to a Z window.
+# Matt LeBlanc, Brown University 2026
+# matt_leblanc@brown.edu
+#########################################################################
+#
+model = SM
+
+# Set widths and masses
+# Take uds as light ...
+ms = 0
+mc = 1.27 GeV
+mb = 4.18 GeV
+
+me     = 0.5109989e-3 GeV
+mmu    = 0.10565837 GeV
+mtop   = 174 GeV
+wtop   = 1.37 GeV
+mW     = 80.45 GeV
+wW     = 2.071 GeV
+mZ     = 91.188 GeV
+wZ     = 2.478 GeV
+mH     = 125 GeV
+wH     = 0.00407 GeV
+
+# Define aliases
+# We can't include c and b here as the aliased particle masses must be the same ... we add them in later, separately
+alias q_light = u:d:s
+alias Q_light = U:D:S
+
+# CoM Energy and seed
+sqrts = 10 TeV
+seed = 1234
+
+# s-channel Z/gamma* annihilation to hadrons (full interference, no diagram restriction)
+# Accounting for c and b quark masses: https://answers.launchpad.net/whizard/+question/689294
+process z_rr_to_hadrons = "e2", "E2" => (q_light, Q_light) + (c, C) + (b, B)
+
+# Compile the matrix elements
+compile
+
+# Lepton-collider ISR structure functions on both muon beams (a single
+# 'isr' entry applies to both). isr_mass defaults to the beam particle
+# mass (mmu above); set explicitly for clarity. Defaults kept:
+# isr_order = 3 (highest), isr_log_order = 0 (LL), isr_alpha from the
+# model, isr_q_max = sqrts.
+beams = "e2", "E2" => isr
+isr_mass = 0.10565837 GeV
+
+# Z-pole window on the partonic invariant mass. This regulates the
+# gamma* -> qqbar low-mass pole (the cross section diverges as
+# sqrts_hat -> 0 for massless quarks) and avoids overlap with the
+# non-radiative full-energy sample (mumu_Z_hadrons_10TeV).
+cuts = sqrts_hat > 60 GeV and sqrts_hat < 120 GeV
+
+# ISR photons are written as exactly collinear with the beams (no
+# ?isr_handler). This is physically appropriate for muon beams, where
+# true ISR pT is at the m_mu scale. NOTE: do not enable the ISR event
+# handler ($isr_handler_mode = "recoil"): in WHIZARD 3.1.5 it draws
+# photon pT log-uniformly up to isr_q_max = sqrts, producing unphysical
+# multi-TeV-pT photons and E leaks of O(100 GeV) (validated 2026-10).
+# Also do NOT use ?isr_recoil = true (Lorentz-violating, trac #791).
+
+# ISR photons are classified as beam remnants; keep beams and remnants
+# so the photons are written to the HepMC output as outgoing particles.
+?keep_beams = true
+?keep_remnants = true
+
+# Parton shower and hadronization done with Pythia6.
+# NOTE: do not switch this card to PYTHIA8. The WHIZARD 3.1.5 internal
+# PYTHIA8 interface drops the ~5 TeV collinear ISR photon from the event
+# record in ~15% of events and breaks E conservation (and aborts outright
+# when the ISR handler is on). The PYTHIA6 interface conserves E/p to
+# <0.03 GeV with the Z peak at m_Z (validated 2026-10).
+?ps_fsr_active = true
+?hadronization_active = true
+?allow_shower = true
+
+$shower_method = "PYTHIA6"
+$hadronization_method = "PYTHIA6"
+
+# Integration: 2 extra structure-function dimensions + Z resonance need
+# more adaptation passes, but the 2->2 matrix element keeps passes cheap.
+integrate (z_rr_to_hadrons) { iterations = 8:100000:"gw", 5:200000 }
+
+# Generate radiative-return Z -> Hadrons events
+simulate (z_rr_to_hadrons) {
+  n_events = 1000
+  $sample = "mumu_z_rr_hadrons_10TeV"
+  sample_format = hepmc
+}

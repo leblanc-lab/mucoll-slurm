@@ -155,8 +155,21 @@ with checksums, kinematics, seed, benchmark commit, and container provenance.
 
 ## 5. Whizard signal production (advanced)
 
-[`submit_whizard.py`](submit_whizard.py) drives the Whizard WWZ/ZZZ hadronic
-chains (steering `.sin` files live in [`whizard/`](whizard/)):
+[`submit_whizard.py`](submit_whizard.py) drives the Whizard hadronic chains
+(steering `.sin` files live in [`whizard/`](whizard/)):
+
+- **WWZ** / **ZZZ** — WW-fusion / ZZ-fusion to hadrons at 10 TeV (Pythia8
+  shower/hadronization).
+- **Z** — s-channel `mu mu -> Z/gamma* -> qqbar` at full energy (no ISR, so
+  m(qqbar) = 10 TeV).
+- **Z_RR** — same process with muon-beam ISR: radiative return to the Z pole,
+  partonic mass windowed to 60–120 GeV. ISR photons are exactly collinear
+  with the beams.
+
+The two s-channel cards use **Pythia6** for shower/hadronization: the
+WHIZARD 3.1.5 internal Pythia8 interface breaks energy conservation for
+these configurations (c/b strings at 10 TeV; dropped ISR photons for Z_RR)
+— see the NOTE comments in the cards before changing this.
 
 1. **(Once)** build the integration grids: `python make_gridpack.py` — writes
    `.vg` grids under `$DATA_GROUP_DIR/gridpacks/`.
@@ -166,5 +179,29 @@ chains (steering `.sin` files live in [`whizard/`](whizard/)):
 
 The v3.1 simulation image includes the event-generator layer, so the Whizard and
 particle-gun chains use the same pinned SIF configured in `config.sh`.
+
+### On Perlmutter (NERSC)
+
+`submit_whizard.py` targets Oscar (apptainer, no account/constraint flags) and
+will not submit on Perlmutter. Use the NERSC/Shifter driver instead
+(`whizard_nersc/submit_whizard_nersc.py`; the cards are shared through this
+repo's `whizard/` directory):
+
+```bash
+# quick validation in the debug queue (30 min cap; auto-clamped):
+python whizard_nersc/submit_whizard_nersc.py --process Z_RR \
+    --njobs 1 --nevents 20 --qos debug
+
+# a very fast integration override for pure plumbing checks (NOT physics quality):
+python whizard_nersc/submit_whizard_nersc.py --process Z \
+    --njobs 1 --nevents 20 --qos debug --iterations '2:1000, 2:2000'
+
+# production:
+python whizard_nersc/submit_whizard_nersc.py --process Z_RR --njobs 10 --nevents 1000
+```
+
+Both s-channel cards integrate quickly (Z in seconds, Z_RR in a few minutes),
+so a 20-event debug-queue test fits the 30-minute cap even with the cards'
+full production iterations.
 
 ---
