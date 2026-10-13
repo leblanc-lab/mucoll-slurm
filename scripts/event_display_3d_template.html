@@ -1,0 +1,420 @@
+<title>MAIA Event Viewer</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
+<style>
+  /* Committed dark instrument view: an event display lives on a dark ground.
+     Backgrounds are painted explicitly so the page holds on any host theme. */
+  :root {
+    --ground:    #131312;
+    --surface:   #1a1a19;
+    --edge:      #34342f;
+    --ink:       #ffffff;
+    --ink-2:     #c3c2b7;
+    --ink-3:     #85847b;
+    --ecal:      #d95926;
+    --hcal:      #3987e5;
+    --muon:      #199e70;
+    --tracker:   #c3c2b7;
+    --pfo:       #d55181;
+    --mc:        #6a6a63;
+    --accent:    #3987e5;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html, body { height: 100%; }
+  body {
+    background: var(--ground);
+    color: var(--ink-2);
+    font-family: "IBM Plex Sans", system-ui, sans-serif;
+    overflow: hidden;
+  }
+  #gl { position: fixed; inset: 0; width: 100%; height: 100%; display: block;
+        cursor: grab; touch-action: none; }
+  #gl.dragging { cursor: grabbing; }
+
+  .card {
+    position: fixed;
+    background: color-mix(in srgb, var(--surface) 88%, transparent);
+    border: 1px solid var(--edge);
+    border-radius: 6px;
+    padding: 10px 12px;
+    backdrop-filter: blur(6px);
+    font-size: 12px;
+    line-height: 1.5;
+  }
+  #header { top: 14px; left: 14px; max-width: 360px; }
+  #header h1 {
+    font-family: "IBM Plex Mono", ui-monospace, monospace;
+    font-size: 14px; font-weight: 600; color: var(--ink);
+    letter-spacing: 0.02em; margin-bottom: 2px;
+  }
+  #header .sub { color: var(--ink-3); font-size: 11px; }
+  #header .stats {
+    display: grid; grid-template-columns: auto auto; gap: 0 18px;
+    margin-top: 8px;
+    font-family: "IBM Plex Mono", ui-monospace, monospace;
+    font-variant-numeric: tabular-nums; font-size: 11.5px;
+  }
+  #header .stats b { color: var(--ink); font-weight: 500; }
+
+  #legend { bottom: 14px; left: 14px; min-width: 240px; }
+  #legend .row {
+    display: flex; align-items: center; gap: 8px;
+    padding: 2.5px 0; cursor: pointer; user-select: none;
+  }
+  #legend .row input { accent-color: var(--accent); }
+  #legend .chip { width: 10px; height: 10px; border-radius: 2px; flex: none; }
+  #legend .chip.line { height: 2px; border-radius: 1px; }
+  #legend .name { flex: 1; color: var(--ink-2); }
+  #legend .n {
+    font-family: "IBM Plex Mono", ui-monospace, monospace;
+    font-variant-numeric: tabular-nums;
+    color: var(--ink-3); font-size: 11px;
+  }
+  #legend .thr { margin-top: 8px; border-top: 1px solid var(--edge); padding-top: 8px; }
+  #legend .thr label {
+    display: flex; justify-content: space-between;
+    font-size: 11px; color: var(--ink-3);
+    text-transform: uppercase; letter-spacing: 0.06em;
+  }
+  #legend .thr output {
+    font-family: "IBM Plex Mono", ui-monospace, monospace;
+    color: var(--ink-2); text-transform: none; letter-spacing: 0;
+  }
+  #legend input[type=range] { width: 100%; accent-color: var(--accent); }
+
+  #views { top: 14px; right: 14px; display: flex; gap: 6px; padding: 6px; }
+  #views button {
+    font-family: "IBM Plex Mono", ui-monospace, monospace;
+    font-size: 11px; font-weight: 500;
+    color: var(--ink-2); background: transparent;
+    border: 1px solid var(--edge); border-radius: 4px;
+    padding: 4px 10px; cursor: pointer;
+  }
+  #views button:hover { color: var(--ink); border-color: var(--ink-3); }
+  #views button:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+
+  #readout {
+    bottom: 14px; right: 14px;
+    font-family: "IBM Plex Mono", ui-monospace, monospace;
+    font-variant-numeric: tabular-nums;
+    font-size: 11px; color: var(--ink-3);
+    max-width: 330px;
+  }
+  #readout b { color: var(--ink-2); font-weight: 500; }
+  #hint { position: fixed; bottom: 64px; right: 14px; font-size: 10.5px;
+          color: var(--ink-3); text-align: right; pointer-events: none; }
+</style>
+
+<canvas id="gl"></canvas>
+<div class="card" id="header"></div>
+<div class="card" id="views"></div>
+<div class="card" id="legend"></div>
+<div class="card" id="readout">click a hit to inspect</div>
+<div id="hint">drag rotate &nbsp;·&nbsp; shift-drag pan &nbsp;·&nbsp; wheel zoom &nbsp;·&nbsp; double-click reset</div>
+
+<script>
+"use strict";
+const EVENT = /*EVENT_JSON*/null;
+
+// ---------------------------------------------------------------- WebGL setup
+const canvas = document.getElementById("gl");
+const gl = canvas.getContext("webgl", { antialias: true });
+
+function compile(vs, fs) {
+  const mk = (type, src) => {
+    const s = gl.createShader(type);
+    gl.shaderSource(s, src); gl.compileShader(s);
+    if (!gl.getShaderParameter(s, gl.COMPILE_STATUS))
+      throw new Error(gl.getShaderInfoLog(s));
+    return s;
+  };
+  const p = gl.createProgram();
+  gl.attachShader(p, mk(gl.VERTEX_SHADER, vs));
+  gl.attachShader(p, mk(gl.FRAGMENT_SHADER, fs));
+  gl.linkProgram(p);
+  if (!gl.getProgramParameter(p, gl.LINK_STATUS))
+    throw new Error(gl.getProgramInfoLog(p));
+  return p;
+}
+
+const pointProg = compile(`
+  attribute vec3 aPos;
+  attribute float aQ;          // 0..1 brightness from log(E)
+  uniform mat4 uMVP;
+  uniform float uPxPerMm;      // zoom
+  uniform float uCellMm;       // physical cell size -> granularity
+  uniform float uMinPx;
+  varying float vQ;
+  void main() {
+    gl_Position = uMVP * vec4(aPos, 1.0);
+    gl_PointSize = clamp(uCellMm * uPxPerMm, uMinPx, 64.0);
+    vQ = aQ;
+  }`, `
+  precision mediump float;
+  uniform vec3 uColor;
+  uniform float uRound;
+  varying float vQ;
+  void main() {
+    if (uRound > 0.5 && length(gl_PointCoord - 0.5) > 0.5) discard;
+    vec3 c = mix(uColor * 0.40, uColor, vQ);
+    gl_FragColor = vec4(c, 1.0);
+  }`);
+
+const lineProg = compile(`
+  attribute vec3 aPos;
+  uniform mat4 uMVP;
+  void main() { gl_Position = uMVP * vec4(aPos, 1.0); }`, `
+  precision mediump float;
+  uniform vec4 uColor;
+  void main() { gl_FragColor = uColor; }`);
+
+// ------------------------------------------------------------------- buffers
+function buf(arr) {
+  const b = gl.createBuffer();
+  gl.bindBuffer(gl.ARRAY_BUFFER, b);
+  gl.bufferData(gl.ARRAY_BUFFER, arr, gl.STATIC_DRAW);
+  return b;
+}
+
+const groups = EVENT.groups.map(g => {
+  const n = g.xyz.length / 3;
+  const q = new Float32Array(n);
+  if (g.e.length) {
+    // brightness from log-energy rank within the group (hits sorted desc)
+    const emax = Math.max(g.e[0], 1e-9), emin = Math.max(g.e[n - 1], 1e-9);
+    const span = Math.max(Math.log(emax / emin), 1e-3);
+    for (let i = 0; i < n; i++)
+      q[i] = 0.25 + 0.75 * Math.max(0, Math.log(Math.max(g.e[i], 1e-9) / emin)) / span;
+  } else q.fill(0.8);
+  return {
+    ...g, n, visible: true, drawN: n,
+    posBuf: buf(new Float32Array(g.xyz)), qBuf: buf(q),
+  };
+});
+
+const raySets = EVENT.rays.map(r => ({
+  ...r, n: r.xyz.length / 3, visible: r.on,
+  posBuf: buf(new Float32Array(r.xyz)),
+}));
+
+// Detector envelopes: data-driven cylinders per calo group (+ beam axis)
+function cylinder(rin, rout, zmax, segs = 72) {
+  const v = [];
+  for (const r of [rin, rout]) {
+    if (r <= 0) continue;
+    for (const z of [-zmax, zmax])
+      for (let i = 0; i < segs; i++) {
+        const a0 = 2 * Math.PI * i / segs, a1 = 2 * Math.PI * (i + 1) / segs;
+        v.push(r * Math.cos(a0), r * Math.sin(a0), z,
+               r * Math.cos(a1), r * Math.sin(a1), z);
+      }
+    for (let i = 0; i < 4; i++) {
+      const a = Math.PI * i / 2 + Math.PI / 4;
+      v.push(r * Math.cos(a), r * Math.sin(a), -zmax,
+             r * Math.cos(a), r * Math.sin(a), zmax);
+    }
+  }
+  return v;
+}
+const envSets = EVENT.env.map(e => ({
+  color: e.color,
+  posBuf: buf(new Float32Array(cylinder(e.rin, e.rout, e.zmax))),
+  n: cylinder(e.rin, e.rout, e.zmax).length / 3,
+}));
+let Rmax = 1;
+EVENT.env.forEach(e => { Rmax = Math.max(Rmax, e.rout, e.zmax); });
+groups.forEach(g => {
+  for (let i = 0; i < g.xyz.length; i++) Rmax = Math.max(Rmax, Math.abs(g.xyz[i]));
+});
+const axis = { posBuf: buf(new Float32Array([0, 0, -1.1 * Rmax, 0, 0, 1.1 * Rmax])), n: 2 };
+
+// ------------------------------------------------------------------- camera
+const cam = { yaw: -0.55, pitch: 0.35, zoom: 0, panX: 0, panY: 0 };
+function resetView(yaw, pitch) {
+  cam.yaw = yaw; cam.pitch = pitch; cam.panX = 0; cam.panY = 0;
+  cam.zoom = 0.42 * Math.min(canvas.width, canvas.height) / Rmax;
+  draw();
+}
+
+function mvp() {
+  const cy = Math.cos(cam.yaw), sy = Math.sin(cam.yaw);
+  const cp = Math.cos(cam.pitch), sp = Math.sin(cam.pitch);
+  const w = canvas.width, h = canvas.height, s = cam.zoom;
+  // rows of R = Rx(pitch) * Ry(yaw); orthographic, z kept for point depth only
+  const r0 = [cy, 0, sy], r1 = [sy * sp, cp, -cy * sp], r2 = [-sy * cp, sp, cy * cp];
+  const sx = 2 * s / w, sxp = 2 * cam.panX / w;
+  const syc = 2 * s / h, syp = 2 * cam.panY / h;
+  return new Float32Array([
+    r0[0] * sx, r1[0] * syc, r2[0] * 1e-6, 0,
+    r0[1] * sx, r1[1] * syc, r2[1] * 1e-6, 0,
+    r0[2] * sx, r1[2] * syc, r2[2] * 1e-6, 0,
+    sxp, syp, 0, 1,
+  ]);
+}
+
+// --------------------------------------------------------------------- draw
+function hex(c) {
+  return [parseInt(c.slice(1, 3), 16) / 255,
+          parseInt(c.slice(3, 5), 16) / 255,
+          parseInt(c.slice(5, 7), 16) / 255];
+}
+
+function draw() {
+  const dpr = window.devicePixelRatio || 1;
+  const W = Math.round(canvas.clientWidth * dpr), H = Math.round(canvas.clientHeight * dpr);
+  if (canvas.width !== W || canvas.height !== H) { canvas.width = W; canvas.height = H; }
+  gl.viewport(0, 0, W, H);
+  const g0 = hex("#131312");
+  gl.clearColor(g0[0], g0[1], g0[2], 1);
+  gl.clear(gl.COLOR_BUFFER_BIT);
+  const M = mvp();
+
+  // lines first (envelopes, beam axis, rays), points on top
+  gl.useProgram(lineProg);
+  gl.uniformMatrix4fv(gl.getUniformLocation(lineProg, "uMVP"), false, M);
+  const aL = gl.getAttribLocation(lineProg, "aPos");
+  gl.enableVertexAttribArray(aL);
+  const line = (set, rgba) => {
+    gl.bindBuffer(gl.ARRAY_BUFFER, set.posBuf);
+    gl.vertexAttribPointer(aL, 3, gl.FLOAT, false, 0, 0);
+    gl.uniform4fv(gl.getUniformLocation(lineProg, "uColor"), rgba);
+    gl.drawArrays(gl.LINES, 0, set.n);
+  };
+  line(axis, [0.35, 0.35, 0.33, 1]);
+  envSets.forEach(e => line(e, [...hex(e.color), 0.28]));
+  gl.enable(gl.BLEND); gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
+  raySets.forEach(r => { if (r.visible) line(r, [...hex(r.color), 0.8]); });
+  gl.disable(gl.BLEND);
+
+  gl.useProgram(pointProg);
+  gl.uniformMatrix4fv(gl.getUniformLocation(pointProg, "uMVP"), false, M);
+  gl.uniform1f(gl.getUniformLocation(pointProg, "uPxPerMm"), cam.zoom * (window.devicePixelRatio || 1));
+  const aP = gl.getAttribLocation(pointProg, "aPos");
+  const aQ = gl.getAttribLocation(pointProg, "aQ");
+  gl.enableVertexAttribArray(aP); gl.enableVertexAttribArray(aQ);
+  for (const g of groups) {
+    if (!g.visible || !g.drawN) continue;
+    gl.bindBuffer(gl.ARRAY_BUFFER, g.posBuf);
+    gl.vertexAttribPointer(aP, 3, gl.FLOAT, false, 0, 0);
+    gl.bindBuffer(gl.ARRAY_BUFFER, g.qBuf);
+    gl.vertexAttribPointer(aQ, 1, gl.FLOAT, false, 0, 0);
+    gl.uniform3fv(gl.getUniformLocation(pointProg, "uColor"), hex(g.color));
+    gl.uniform1f(gl.getUniformLocation(pointProg, "uCellMm"), g.cell);
+    gl.uniform1f(gl.getUniformLocation(pointProg, "uMinPx"), g.kind === "cells" ? 1.5 : 2.0);
+    gl.uniform1f(gl.getUniformLocation(pointProg, "uRound"), g.kind === "cells" ? 0 : 1);
+    gl.drawArrays(gl.POINTS, 0, g.drawN);
+  }
+}
+
+// -------------------------------------------------------------- interaction
+let drag = null;
+canvas.addEventListener("pointerdown", e => {
+  drag = { x: e.clientX, y: e.clientY, moved: false, pan: e.shiftKey || e.button === 2 };
+  canvas.classList.add("dragging");
+  canvas.setPointerCapture(e.pointerId);
+});
+canvas.addEventListener("pointermove", e => {
+  if (!drag) return;
+  const dx = e.clientX - drag.x, dy = e.clientY - drag.y;
+  if (Math.abs(dx) + Math.abs(dy) > 2) drag.moved = true;
+  if (drag.pan) { cam.panX += dx * (window.devicePixelRatio || 1); cam.panY -= dy * (window.devicePixelRatio || 1); }
+  else { cam.yaw += dx * 0.006; cam.pitch = Math.max(-1.5, Math.min(1.5, cam.pitch + dy * 0.006)); }
+  drag.x = e.clientX; drag.y = e.clientY;
+  draw();
+});
+canvas.addEventListener("pointerup", e => {
+  if (drag && !drag.moved) pick(e.clientX, e.clientY);
+  drag = null; canvas.classList.remove("dragging");
+});
+canvas.addEventListener("contextmenu", e => e.preventDefault());
+canvas.addEventListener("wheel", e => {
+  e.preventDefault();
+  cam.zoom *= Math.pow(1.0015, -e.deltaY);
+  draw();
+}, { passive: false });
+canvas.addEventListener("dblclick", () => resetView(-0.55, 0.35));
+window.addEventListener("resize", draw);
+
+// click-to-inspect: nearest visible hit in screen space
+function project(M, x, y, z) {
+  return [(M[0] * x + M[4] * y + M[8] * z + M[12]),
+          (M[1] * x + M[5] * y + M[9] * z + M[13])];
+}
+function pick(cx, cy) {
+  const dpr = window.devicePixelRatio || 1;
+  const px = (cx * dpr / canvas.width) * 2 - 1;
+  const py = 1 - (cy * dpr / canvas.height) * 2;
+  const M = mvp();
+  let best = null, bestD = 20 * 2 * dpr / canvas.width; // ~20 px
+  for (const g of groups) {
+    if (!g.visible) continue;
+    for (let i = 0; i < g.drawN; i++) {
+      const [X, Y] = project(M, g.xyz[3 * i], g.xyz[3 * i + 1], g.xyz[3 * i + 2]);
+      const d = Math.hypot(X - px, (Y - py) * canvas.height / canvas.width);
+      if (d < bestD) { bestD = d; best = { g, i }; }
+    }
+  }
+  const out = document.getElementById("readout");
+  if (!best) { out.textContent = "click a hit to inspect"; return; }
+  const { g, i } = best;
+  const x = g.xyz[3 * i], y = g.xyz[3 * i + 1], z = g.xyz[3 * i + 2];
+  const r = Math.hypot(x, y);
+  const e = g.e.length ? ` · E <b>${g.e[i] >= 0.1 ? g.e[i].toFixed(2) + " GeV" : (g.e[i] * 1000).toFixed(2) + " MeV"}</b>` : "";
+  out.innerHTML = `<b>${g.name}</b>${e}<br>x ${x.toFixed(0)} y ${y.toFixed(0)} z ${z.toFixed(0)} mm · R ${r.toFixed(0)} mm`;
+}
+
+// ---------------------------------------------------------------------- HUD
+function fmtE(e) { return e >= 100 ? e.toFixed(0) : e >= 1 ? e.toFixed(1) : e.toFixed(3); }
+{
+  const m = EVENT.meta;
+  document.getElementById("header").innerHTML = `
+    <h1>${m.title}</h1>
+    <div class="sub">${m.file} · event ${m.event}</div>
+    <div class="stats">${m.stats.map(([k, v]) => `<span>${k}</span><b>${v}</b>`).join("")}</div>`;
+
+  const views = [["3D", -0.55, 0.35], ["XY", 0, 0], ["ZY", Math.PI / 2, 0]];
+  document.getElementById("views").innerHTML =
+    views.map((v, i) => `<button data-i="${i}">${v[0]}</button>`).join("");
+  document.querySelectorAll("#views button").forEach(b =>
+    b.addEventListener("click", () => { const v = views[+b.dataset.i]; resetView(v[1], v[2]); }));
+
+  const leg = document.getElementById("legend");
+  const row = (chipStyle, name, n, cls, idx, checked) => `
+    <label class="row"><input type="checkbox" data-${cls}="${idx}" ${checked ? "checked" : ""}>
+      <span class="chip ${cls === "ray" ? "line" : ""}" style="background:${chipStyle}"></span>
+      <span class="name">${name}</span><span class="n">${n}</span></label>`;
+  leg.innerHTML =
+    groups.map((g, i) => row(g.color, g.name, `${g.n} hits · ${fmtE(g.esum)} GeV`, "grp", i, true)).join("") +
+    raySets.map((r, i) => row(r.color, r.name, r.n / 2, "ray", i, r.on)).join("") + `
+    <div class="thr">
+      <label>calo hit threshold <output id="thrv">all hits</output></label>
+      <input type="range" id="thr" min="0" max="100" value="0">
+    </div>`;
+  leg.addEventListener("change", e => {
+    const t = e.target;
+    if (t.dataset.grp !== undefined) groups[+t.dataset.grp].visible = t.checked;
+    if (t.dataset.ray !== undefined) raySets[+t.dataset.ray].visible = t.checked;
+    draw();
+  });
+  const thr = document.getElementById("thr"), thrv = document.getElementById("thrv");
+  thr.addEventListener("input", () => {
+    const f = +thr.value / 100;
+    // threshold sweeps each group's log-energy range; hits sorted desc in file
+    for (const g of groups) {
+      if (!g.e.length || g.kind !== "cells") { g.drawN = g.n; continue; }
+      const emin = Math.max(g.e[g.n - 1], 1e-9), emax = Math.max(g.e[0], 1e-9);
+      const cut = emin * Math.pow(emax / emin, f * 0.85);
+      let lo = 0, hi = g.n;           // first index with e < cut
+      while (lo < hi) { const mid = (lo + hi) >> 1; (g.e[mid] >= cut) ? lo = mid + 1 : hi = mid; }
+      g.drawN = lo;
+    }
+    thrv.textContent = f === 0 ? "all hits"
+      : "≥ " + (() => { const c = Math.max(...groups.filter(g => g.kind === "cells").map(g => {
+          const emin = Math.max(g.e[g.n - 1], 1e-9), emax = Math.max(g.e[0], 1e-9);
+          return emin * Math.pow(emax / emin, f * 0.85); }));
+          return c >= 0.1 ? c.toFixed(2) + " GeV" : (c * 1000).toFixed(1) + " MeV"; })();
+    draw();
+  });
+}
+
+resetView(-0.55, 0.35);
+</script>
