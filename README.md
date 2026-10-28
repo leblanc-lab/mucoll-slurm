@@ -205,3 +205,52 @@ so a 20-event debug-queue test fits the 30-minute cap even with the cards'
 full production iterations.
 
 ---
+
+## 6. Pythia8 signal production
+
+[`submit_pythia.py`](submit_pythia.py) drives Pythia8 versions of the
+s-channel samples. Each process is a `.cmnd` card in [`pythia/`](pythia/), run
+through the generic chain [`chains/run_chain_pythia.sh`](chains/run_chain_pythia.sh):
+
+- **Z_pythia** ([`mumu_Z_hadrons_10TeV.cmnd`](pythia/mumu_Z_hadrons_10TeV.cmnd))
+  — `mu mu -> Z/gamma* -> qqbar` (q = udscb, full gamma*/Z interference) at
+  full energy, `PDF:lepton = off` (no ISR, so m(qqbar) = 10 TeV).
+- **Z_RR_pythia** ([`mumu_Z_RR_hadrons_10TeV.cmnd`](pythia/mumu_Z_RR_hadrons_10TeV.cmnd))
+  — same process with muon-beam ISR (lepton PDF + QED initial-state shower),
+  m̂ windowed to 60–120 GeV.
+
+Unlike the Whizard Z_RR card, where ISR photons are exactly collinear, the
+Pythia QED ISR shower gives the photons finite pT; for this colour-singlet
+s-channel process it is a power shower, allowed up to the kinematic limit. In ~20% of Z_RR events the hard ISR photon lands in the
+detector (θ = 10–170°) and the Z recoils against it.
+Both cards leave hadrons with cτ > 10 mm (K0S, Λ, ...) for Geant4 to decay.
+
+The Z_RR card evaluates the lepton PDF at Q² = s (Pythia's default is
+Q² = m̂², which undershoots the radiative-return rate by 1.75× at 10 TeV;
+see the comment in the card). Cross-checks against the Whizard cards
+(2026-10, v3.1 image):
+
+| sample | Pythia8 | Whizard | note |
+|--------|---------|---------|------|
+| Z      | 7.25 fb | 6.20 fb | α_em(m̂) running in Pythia vs G_μ scheme in Whizard |
+| Z_RR   | 19.2 fb | 18.1 fb | LL lepton PDF vs `isr_order = 3` structure function |
+
+The generator is a small C++ driver, [`pythia/pythia_hepmc3.cc`](pythia/pythia_hepmc3.cc)
+(`pythia_hepmc3 CARD OUTPUT.hepmc NEVENTS SEED`), compiled at the start of
+each job against the image's Pythia 8.315 and HepMC3; it writes HepMC3 that
+ddsim reads directly. NEVENTS and the seed (`1234 + JOB_ID`, as in the Whizard
+chains) override whatever the card says. There is no gridpack step: Pythia
+sets up these 2 → 1 processes in under a second.
+
+```bash
+python submit_pythia.py        # edit NUM_JOBS / NEVENTS_PER_JOB / PROCESSES first
+```
+
+To run a different process, drop a new card in `pythia/` and add a
+`(label, card)` entry to `PROCESSES`. Interactively, inside the container:
+
+```bash
+bash chains/run_chain_pythia.sh 0 1 /tmp/test ../mucoll-benchmarks mumu_Z_RR_hadrons_10TeV.cmnd
+```
+
+---
