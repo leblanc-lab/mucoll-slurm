@@ -56,7 +56,8 @@ TIMED=()
 CMD=(k4run "${MUCOLL_CONFIG}/${MUCOLL_CONFIG_NAME}/reco_steer.py"
      --inputFiles "${INPUT_FILE}"
      --outputFile "${OUTPUT_FILE}"
-     --numThreads "${NUM_THREADS}")
+     --numThreads "${NUM_THREADS}"
+     -n -1)
 
 echo "Running: ${CMD[*]}"
 "${TIMED[@]}" "${CMD[@]}"

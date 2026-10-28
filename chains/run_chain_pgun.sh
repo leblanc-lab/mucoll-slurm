@@ -11,6 +11,7 @@
 #     --theta-min V     min polar angle [deg]                        [default 10]
 #     --theta-max V     max polar angle [deg]                        [default 170]
 #     --bib             enable Beam-Induced Background overlay in DIGI [off]
+#     --seed N          random seed for GEN and DIGI          [default 1234 + job-id]
 #
 #  Paths (image, benchmarks, geometry, BIB samples) come from ../config.sh.
 # =============================================================================
@@ -25,6 +26,7 @@ PT=100
 THETA_MIN=10
 THETA_MAX=170
 DO_BIB=0
+SEED=""
 
 while [ $# -gt 0 ]; do
     case "$1" in
@@ -36,6 +38,7 @@ while [ $# -gt 0 ]; do
         --theta-min)  THETA_MIN="$2";  shift 2 ;;
         --theta-max)  THETA_MAX="$2";  shift 2 ;;
         --bib)        DO_BIB=1;        shift 1 ;;
+        --seed)       SEED="$2";       shift 2 ;;
         *) echo "Unknown argument: $1" >&2; exit 1 ;;
     esac
 done
@@ -44,6 +47,8 @@ if [ -z "$JOB_ID" ] || [ -z "$OUTPUT_DIR" ]; then
     echo "ERROR: --job-id and --outdir are required." >&2
     exit 1
 fi
+# Every job needs its own seed, otherwise all jobs generate identical events.
+SEED="${SEED:-$((1234 + JOB_ID))}"
 
 # --- Resolve repo location and load shared config / environment --------------
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]:-$0}")" && pwd)"
@@ -54,7 +59,7 @@ source "$SCRIPT_DIR/../scripts/setup.sh"     # spack stack (glob-based)
 source "$MUCOLL_BENCHMARKS_PATH/setup_config.sh" "$MUCOLL_BENCHMARKS_PATH" "$GEOM_NAME"
 
 echo "=== pgun chain: job $JOB_ID, $NEVENTS events ==="
-echo "Particle: PDG=$PDG, pT=$PT GeV, theta=[$THETA_MIN, $THETA_MAX], BIB=$DO_BIB"
+echo "Particle: PDG=$PDG, pT=$PT GeV, theta=[$THETA_MIN, $THETA_MAX], BIB=$DO_BIB, seed=$SEED"
 echo "Output:   $OUTPUT_DIR/job_${JOB_ID}"
 
 # --- Scratch working directory ----------------------------------------------
@@ -69,7 +74,7 @@ cp -r "$MUCOLL_CONFIG/$MUCOLL_CONFIG_NAME/PandoraSettings/" ./
 # --- 1. Generation -----------------------------------------------------------
 echo "--- Generation ---"
 python "$MUCOLL_BENCHMARKS_PATH/generation/pgun/pgun_edm4hep.py" \
-    -p 1 -e "$NEVENTS" --pdg "$PDG" --pt "$PT" --theta "$THETA_MIN" "$THETA_MAX" \
+    -p 1 -e "$NEVENTS" -s "$SEED" --pdg "$PDG" --pt "$PT" --theta "$THETA_MIN" "$THETA_MAX" \
     -- gen_output.edm4hep.root
 
 # --- 2. Simulation -----------------------------------------------------------
@@ -89,13 +94,16 @@ if [ "$DO_BIB" -eq 1 ]; then
                    --OverlayFullNumberBackground "$BIB_NUMBER")
 fi
 k4run "$MUCOLL_CONFIG/$MUCOLL_CONFIG_NAME/digi_steer.py" \
+    -n -1 \
     --inputFiles sim_output.edm4hep.root \
     --outputFile digi_output.edm4hep.root \
+    --RandSeed "$SEED" \
     "${DIGI_BIB_ARGS[@]}"
 
 # --- 4. Reconstruction -------------------------------------------------------
 echo "--- Reconstruction ---"
 k4run "$MUCOLL_CONFIG/$MUCOLL_CONFIG_NAME/reco_steer.py" \
+    -n -1 \
     --inputFiles digi_output.edm4hep.root \
     --outputFile reco_output.edm4hep.root
 

@@ -8,6 +8,7 @@ an ``apptainer exec`` command and submit a SLURM job.
 import os
 import shlex
 import subprocess
+import zlib
 
 REPO_DIR = os.path.dirname(os.path.realpath(__file__))
 CONFIG_SH = os.path.join(REPO_DIR, "config.sh")
@@ -80,6 +81,18 @@ def apptainer_cmd(cfg, chain_script, chain_args, image=None):
         f"apptainer exec --bind {cfg['DATA_BIND']},{cfg['WORK_DIR']} "
         f"{shlex.quote(image or cfg['IMAGE'])} bash {shlex.quote(chain_script)} {args}"
     )
+
+
+def pgun_seed(pdg, pt, theta_min, theta_max, job_id):
+    """Reproducible random seed for one particle-gun job.
+
+    Derived from the physics point and the job id (not the submission order),
+    so re-running or reordering a scan gives the same seeds, and different
+    points / job ids get different ones. BIB is deliberately not part of the
+    key: the bib and nobib samples of a point share their generated events.
+    """
+    key = f"{pdg}_{pt}_{theta_min}_{theta_max}_{job_id}".encode()
+    return zlib.crc32(key) & 0x7FFFFFFF
 
 
 def make_slurm_script(job_name, out_log, err_log, sbatch_directives, body):
