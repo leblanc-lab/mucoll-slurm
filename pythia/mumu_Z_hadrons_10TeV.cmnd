@@ -1,0 +1,39 @@
+! MUMU_Z_Hadrons_10TeV (Pythia8)
+!########################################################################
+! mu mu -> q qbar via s-channel Z/gamma* at 10 TeV (monochromatic
+! beams, no ISR): m(qqbar) is pinned at sqrts = 10 TeV.
+! Pythia8 counterpart of whizard/mumu_Z_hadrons_10TeV.sin.
+! Matt LeBlanc, Brown University 2026
+! matt_leblanc@brown.edu
+!########################################################################
+!
+! Main:numberOfEvents and Random:seed are set by pythia_hepmc3 from the
+! command line; anything given for them here is overridden.
+
+Next:numberCount = 100
+Next:numberShowEvent = 0
+
+! --- Beams ---------------------------------------------------------------
+Beams:idA = 13                  ! mu-
+Beams:idB = -13                 ! mu+
+Beams:eCM = 10000.              ! GeV
+
+! No ISR: the muons carry the full beam energy, so there are no
+! initial-state photons and the hard process sits at sqrt(s).
+PDF:lepton = off
+
+! --- Hard process --------------------------------------------------------
+! s-channel f fbar -> gamma*/Z with full gamma*/Z interference.
+WeakSingleBoson:ffbar2gmZ = on
+WeakZ0:gmZmode = 0
+
+! Final state picked through the Z0 decay table (interference included):
+! keep only q qbar with q = d u s c b (no top, as in the Whizard card).
+23:onMode = off
+23:onIfAny = 1 2 3 4 5
+
+! --- Decays --------------------------------------------------------------
+! Leave hadrons with c*tau > 10 mm (K0S, Lambda, ...) stable so Geant4
+! decays them in the detector.
+ParticleDecays:limitTau0 = on
+ParticleDecays:tau0Max = 10.

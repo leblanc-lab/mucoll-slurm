@@ -1,0 +1,60 @@
+! MUMU_Z_RR_Hadrons_10TeV (Pythia8)
+!########################################################################
+! mu mu -> q qbar: radiative return to the Z at a 10 TeV muon collider.
+! Muon-beam ISR lets the qqbar system return to the Z pole; the partonic
+! mass is restricted to a Z window.
+! Pythia8 counterpart of whizard/mumu_Z_RR_hadrons_10TeV.sin.
+! Matt LeBlanc, Brown University 2026
+! matt_leblanc@brown.edu
+!########################################################################
+!
+! Main:numberOfEvents and Random:seed are set by pythia_hepmc3 from the
+! command line; anything given for them here is overridden.
+
+Next:numberCount = 100
+Next:numberShowEvent = 0
+
+! --- Beams ---------------------------------------------------------------
+Beams:idA = 13                  ! mu-
+Beams:idB = -13                 ! mu+
+Beams:eCM = 10000.              ! GeV
+
+! ISR: leading-log QED structure function for each muon beam (the muon
+! mass is used for the collinear log), plus the QED initial-state shower,
+! which generates the energies and angles of the ISR photons. Unlike the
+! Whizard card (photons exactly collinear), the shower photons carry
+! finite pT. One extra collinear photon per beam absorbs any leftover
+! radiated energy, so E and p are conserved.
+PDF:lepton = on
+PartonLevel:ISR = on
+
+! Evaluate the lepton PDF at Q^2 = s rather than the default Q^2 = mHat^2.
+! The radiative-return rate is set by the collinear log
+! beta ~ (2 alpha/pi) (ln(Q^2/m_mu^2) - 1), and the physical scale is s
+! (the photons come off the full-energy beams). With the default mHat^2
+! the Z_RR cross section comes out 1.75x low at 10 TeV. Q^2 = s matches
+! WHIZARD's isr_q_max = sqrts (validated 2026-10, see README).
+SigmaProcess:factorScale1 = 2
+SigmaProcess:factorFixScale = 1.e8     ! GeV^2 = (10 TeV)^2
+
+! --- Hard process --------------------------------------------------------
+! s-channel f fbar -> gamma*/Z with full gamma*/Z interference.
+WeakSingleBoson:ffbar2gmZ = on
+WeakZ0:gmZmode = 0
+
+! Final state picked through the Z0 decay table (interference included):
+! keep only q qbar with q = d u s c b.
+23:onMode = off
+23:onIfAny = 1 2 3 4 5
+
+! Z-pole window on the partonic invariant mass. This regulates the
+! gamma* -> qqbar low-mass pole and avoids overlap with the non-radiative
+! full-energy sample (mumu_Z_hadrons_10TeV).
+PhaseSpace:mHatMin = 60.
+PhaseSpace:mHatMax = 120.
+
+! --- Decays --------------------------------------------------------------
+! Leave hadrons with c*tau > 10 mm (K0S, Lambda, ...) stable so Geant4
+! decays them in the detector.
+ParticleDecays:limitTau0 = on
+ParticleDecays:tau0Max = 10.
