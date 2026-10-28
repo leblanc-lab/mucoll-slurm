@@ -17,6 +17,7 @@ import slurm_common as sc
 
 # =============================== EDIT ME ====================================
 NUM_JOBS_PER_POINT = 2
+FIRST_JOB_ID = 0         # raise to add more jobs to an existing scan
 NEVENTS_PER_JOB = 1000
 
 PDG_LIST = [11, 13, 211]                            # e, mu, pi
@@ -60,7 +61,7 @@ def main():
         os.makedirs(log_dir, exist_ok=True)
         print(f"- {point}")
 
-        for i in range(NUM_JOBS_PER_POINT):
+        for i in range(FIRST_JOB_ID, FIRST_JOB_ID + NUM_JOBS_PER_POINT):
             chain_args = [
                 "--job-id", i,
                 "--nevents", NEVENTS_PER_JOB,
@@ -69,6 +70,7 @@ def main():
                 "--pt", pt,
                 "--theta-min", theta_min,
                 "--theta-max", theta_max,
+                "--seed", sc.pgun_seed(pdg, pt, theta_min, theta_max, i),
             ]
             if BIB:
                 chain_args.append("--bib")

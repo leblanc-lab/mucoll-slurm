@@ -76,12 +76,14 @@ ddsim --steeringFile $MUCOLL_BENCHMARKS_PATH/simulation/steer_baseline.py \
 # --- 3. Digitization ---
 echo "Running Digitization..."
 k4run "$MUCOLL_CONFIG/$MUCOLL_CONFIG_NAME/digi_steer.py" \
+    -n -1 \
     --inputFiles sim_output.edm4hep.root \
     --outputFile digi_output.edm4hep.root
 
 # --- 4. Reconstruction ---
 echo "Running Reconstruction..."
 k4run "$MUCOLL_CONFIG/$MUCOLL_CONFIG_NAME/reco_steer.py" \
+    -n -1 \
     --inputFiles digi_output.edm4hep.root \
     --outputFile reco_output.edm4hep.root
 

@@ -15,6 +15,7 @@ import slurm_common as sc
 
 # =============================== EDIT ME ====================================
 NUM_JOBS = 10            # how many jobs to submit
+FIRST_JOB_ID = 0         # raise to add more jobs to an existing study
 NEVENTS_PER_JOB = 100    # events per job
 
 PDG = 13                 # particle: 11=e, 13=mu, 22=gamma, 211=pi+, 2112=n ...
@@ -51,7 +52,7 @@ def main():
     print(f"  output -> {out_dir}")
 
     n_ok = 0
-    for job_id in range(NUM_JOBS):
+    for job_id in range(FIRST_JOB_ID, FIRST_JOB_ID + NUM_JOBS):
         chain_args = [
             "--job-id", job_id,
             "--nevents", NEVENTS_PER_JOB,
@@ -60,6 +61,7 @@ def main():
             "--pt", PT,
             "--theta-min", THETA_MIN,
             "--theta-max", THETA_MAX,
+            "--seed", sc.pgun_seed(PDG, PT, THETA_MIN, THETA_MAX, job_id),
         ]
         if BIB:
             chain_args.append("--bib")
