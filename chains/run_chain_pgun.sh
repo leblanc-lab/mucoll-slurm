@@ -7,7 +7,9 @@
 #     --nevents N       number of events                             [default 100]
 #     --outdir DIR      output directory (job_N/ is created inside)  [required]
 #     --pdg N           particle PDG id (11 e, 13 mu, 211 pi, ...)   [default 13]
-#     --pt V            transverse momentum [GeV]                    [default 100]
+#     --pt V            fixed transverse momentum [GeV]              [default 100]
+#     --pt-min V        min pT [GeV] } give both to draw pT flat in [min, max);
+#     --pt-max V        max pT [GeV] } overrides --pt
 #     --theta-min V     min polar angle [deg]                        [default 10]
 #     --theta-max V     max polar angle [deg]                        [default 170]
 #     --bib             enable Beam-Induced Background overlay in DIGI [off]
@@ -23,6 +25,8 @@ NEVENTS=100
 OUTPUT_DIR=""
 PDG=13
 PT=100
+PT_MIN=""
+PT_MAX=""
 THETA_MIN=10
 THETA_MAX=170
 DO_BIB=0
@@ -35,6 +39,8 @@ while [ $# -gt 0 ]; do
         --outdir)     OUTPUT_DIR="$2"; shift 2 ;;
         --pdg)        PDG="$2";        shift 2 ;;
         --pt)         PT="$2";         shift 2 ;;
+        --pt-min)     PT_MIN="$2";     shift 2 ;;
+        --pt-max)     PT_MAX="$2";     shift 2 ;;
         --theta-min)  THETA_MIN="$2";  shift 2 ;;
         --theta-max)  THETA_MAX="$2";  shift 2 ;;
         --bib)        DO_BIB=1;        shift 1 ;;
@@ -46,6 +52,18 @@ done
 if [ -z "$JOB_ID" ] || [ -z "$OUTPUT_DIR" ]; then
     echo "ERROR: --job-id and --outdir are required." >&2
     exit 1
+fi
+# pgun_edm4hep.py takes `--pt V` (fixed) or `--pt MIN MAX` (flat in [MIN, MAX)).
+if [ -n "$PT_MIN" ] || [ -n "$PT_MAX" ]; then
+    if [ -z "$PT_MIN" ] || [ -z "$PT_MAX" ]; then
+        echo "ERROR: --pt-min and --pt-max must be given together." >&2
+        exit 1
+    fi
+    PT_ARGS=("$PT_MIN" "$PT_MAX")
+    PT_DESC="[$PT_MIN, $PT_MAX] (flat)"
+else
+    PT_ARGS=("$PT")
+    PT_DESC="$PT"
 fi
 # Every job needs its own seed, otherwise all jobs generate identical events.
 SEED="${SEED:-$((1234 + JOB_ID))}"
@@ -59,7 +77,7 @@ source "$SCRIPT_DIR/../scripts/setup.sh"     # spack stack (glob-based)
 source "$MUCOLL_BENCHMARKS_PATH/setup_config.sh" "$MUCOLL_BENCHMARKS_PATH" "$GEOM_NAME"
 
 echo "=== pgun chain: job $JOB_ID, $NEVENTS events ==="
-echo "Particle: PDG=$PDG, pT=$PT GeV, theta=[$THETA_MIN, $THETA_MAX], BIB=$DO_BIB, seed=$SEED"
+echo "Particle: PDG=$PDG, pT=$PT_DESC GeV, theta=[$THETA_MIN, $THETA_MAX], BIB=$DO_BIB, seed=$SEED"
 echo "Output:   $OUTPUT_DIR/job_${JOB_ID}"
 
 # --- Scratch working directory ----------------------------------------------
@@ -74,7 +92,7 @@ cp -r "$MUCOLL_CONFIG/$MUCOLL_CONFIG_NAME/PandoraSettings/" ./
 # --- 1. Generation -----------------------------------------------------------
 echo "--- Generation ---"
 python "$MUCOLL_BENCHMARKS_PATH/generation/pgun/pgun_edm4hep.py" \
-    -p 1 -e "$NEVENTS" -s "$SEED" --pdg "$PDG" --pt "$PT" --theta "$THETA_MIN" "$THETA_MAX" \
+    -p 1 -e "$NEVENTS" -s "$SEED" --pdg "$PDG" --pt "${PT_ARGS[@]}" --theta "$THETA_MIN" "$THETA_MAX" \
     -- gen_output.edm4hep.root
 
 # --- 2. Simulation -----------------------------------------------------------

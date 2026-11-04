@@ -70,6 +70,8 @@ bash chains/run_chain_pgun.sh --job-id 0 --nevents 1 --outdir /tmp/test \
      --pdg 13 --pt 100 --theta-min 10 --theta-max 170        # add --bib for BIB
 ```
 
+Replace `--pt 100` with `--pt-min 10 --pt-max 100` to draw pT flat in [10, 100) GeV.
+
 Or step through the GEN/SIM/DIGI/RECO stages individually — see the per-stage
 READMEs in `mucoll-benchmarks/`.
 
@@ -108,6 +110,10 @@ $OUTPUT_BASE_DIR/<study>/
 
 `<study>` auto-names from the particle/pT/θ and BIB state, e.g.
 `pgun_pdg13_pt100_theta10-170_nobib`.
+
+Set `PT = (min, max)` instead of a single number to draw pT flat in that range,
+like theta (folder e.g. `pgun_pdg13_pt10-100_theta10-170_nobib`). `PT_LIST` in
+the scan script accepts the same mix of numbers and `(min, max)` pairs.
 
 ### Quick test
 

@@ -83,6 +83,22 @@ def apptainer_cmd(cfg, chain_script, chain_args, image=None):
     )
 
 
+def pt_spec(pt):
+    """Interpret a pT setting for the particle gun.
+
+    `pt` is either a number (fixed pT) or a (min, max) pair (pT drawn flat in
+    [min, max)). Returns (tag, chain_args): `tag` labels output folders and
+    seeds ("100" or "10-100"), `chain_args` are the run_chain_pgun.sh options.
+    A fixed pT gives the same tag as before, so existing seeds are unchanged.
+    """
+    if isinstance(pt, (tuple, list)):
+        pt_min, pt_max = pt
+        if not pt_min < pt_max:
+            raise ValueError(f"pT range must have min < max, got {pt!r}")
+        return f"{pt_min}-{pt_max}", ["--pt-min", pt_min, "--pt-max", pt_max]
+    return f"{pt}", ["--pt", pt]
+
+
 def pgun_seed(pdg, pt, theta_min, theta_max, job_id):
     """Reproducible random seed for one particle-gun job.
 

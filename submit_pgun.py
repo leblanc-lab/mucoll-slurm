@@ -19,7 +19,7 @@ FIRST_JOB_ID = 0         # raise to add more jobs to an existing study
 NEVENTS_PER_JOB = 100    # events per job
 
 PDG = 13                 # particle: 11=e, 13=mu, 22=gamma, 211=pi+, 2112=n ...
-PT = 100                 # transverse momentum [GeV]
+PT = 100                 # transverse momentum [GeV]; or (min, max) for flat pT
 THETA_MIN = 10           # min polar angle [deg]
 THETA_MAX = 170          # max polar angle [deg]
 
@@ -42,13 +42,14 @@ def main():
     os.chmod(chain, 0o755)
 
     bib_tag = "bib" if BIB else "nobib"
-    study = STUDY_NAME or f"pgun_pdg{PDG}_pt{PT}_theta{THETA_MIN}-{THETA_MAX}_{bib_tag}"
+    pt_tag, pt_args = sc.pt_spec(PT)
+    study = STUDY_NAME or f"pgun_pdg{PDG}_pt{pt_tag}_theta{THETA_MIN}-{THETA_MAX}_{bib_tag}"
     out_dir = os.path.join(cfg["OUTPUT_BASE_DIR"], study)
     log_dir = os.path.join(out_dir, "logs")
     os.makedirs(log_dir, exist_ok=True)
 
     print(f"Submitting {NUM_JOBS} pgun job(s)  [BIB={'on' if BIB else 'off'}]")
-    print(f"  particle PDG={PDG}, pT={PT} GeV, theta=[{THETA_MIN}, {THETA_MAX}]")
+    print(f"  particle PDG={PDG}, pT={pt_tag} GeV, theta=[{THETA_MIN}, {THETA_MAX}]")
     print(f"  output -> {out_dir}")
 
     n_ok = 0
@@ -58,10 +59,10 @@ def main():
             "--nevents", NEVENTS_PER_JOB,
             "--outdir", out_dir,
             "--pdg", PDG,
-            "--pt", PT,
+            *pt_args,
             "--theta-min", THETA_MIN,
             "--theta-max", THETA_MAX,
-            "--seed", sc.pgun_seed(PDG, PT, THETA_MIN, THETA_MAX, job_id),
+            "--seed", sc.pgun_seed(PDG, pt_tag, THETA_MIN, THETA_MAX, job_id),
         ]
         if BIB:
             chain_args.append("--bib")

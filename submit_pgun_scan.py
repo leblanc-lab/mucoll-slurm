@@ -21,7 +21,7 @@ FIRST_JOB_ID = 0         # raise to add more jobs to an existing scan
 NEVENTS_PER_JOB = 1000
 
 PDG_LIST = [11, 13, 211]                            # e, mu, pi
-PT_LIST = [10, 50, 100]                             # GeV
+PT_LIST = [10, 50, 100]                             # GeV; (min, max) = flat pT
 THETA_LIST = [(10, 170), (30, 150), (80, 100)]      # (min, max) deg
 
 BIB = False              # <-- flip to True to overlay BIB on every point
@@ -55,7 +55,8 @@ def main():
 
     n_ok = 0
     for pdg, pt, (theta_min, theta_max) in points:
-        point = f"pdg{pdg}_pt{pt}_theta{theta_min}-{theta_max}"
+        pt_tag, pt_args = sc.pt_spec(pt)
+        point = f"pdg{pdg}_pt{pt_tag}_theta{theta_min}-{theta_max}"
         out_dir = os.path.join(scan_root, point)
         log_dir = os.path.join(out_dir, "logs")
         os.makedirs(log_dir, exist_ok=True)
@@ -67,10 +68,10 @@ def main():
                 "--nevents", NEVENTS_PER_JOB,
                 "--outdir", out_dir,
                 "--pdg", pdg,
-                "--pt", pt,
+                *pt_args,
                 "--theta-min", theta_min,
                 "--theta-max", theta_max,
-                "--seed", sc.pgun_seed(pdg, pt, theta_min, theta_max, i),
+                "--seed", sc.pgun_seed(pdg, pt_tag, theta_min, theta_max, i),
             ]
             if BIB:
                 chain_args.append("--bib")
